@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Menu, X, ArrowRight, Brain, TrendingUp, BarChart3, Zap, Shield, Globe } from 'lucide-react';
 
 export default function SynapseAILanding() {
@@ -27,21 +28,21 @@ export default function SynapseAILanding() {
         <nav className="w-full px-6 py-6">
           <div className="flex items-center justify-between">
             {/* Logo - Far Left */}
-            <div className={`flex items-center space-x-2 transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
+            <Link href="/" className={`flex items-center space-x-2 transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
                 <Brain className="w-5 h-5 text-white" />
               </div>
               <span className="text-lg font-normal text-white">SynapseAI</span>
-            </div>
+            </Link>
 
             {/* Desktop Navigation - Far Right */}
             <div className={`hidden md:flex items-center space-x-8 transition-all duration-700 delay-200 ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
-              <a href="#services" className="text-gray-300 hover:text-white transition-colors duration-300 text-sm font-normal">Services</a>
-              <a href="#solutions" className="text-gray-300 hover:text-white transition-colors duration-300 text-sm font-normal">Solutions</a>
-              <a href="#about" className="text-gray-300 hover:text-white transition-colors duration-300 text-sm font-normal">About</a>
-              <button className="px-5 py-2 bg-white text-black rounded-full text-sm font-normal hover:bg-gray-100 transition-all duration-300 hover:scale-105">
+              <Link href="/services" className="text-gray-300 hover:text-white transition-colors duration-300 text-sm font-normal">Services</Link>
+              <Link href="/solutions" className="text-gray-300 hover:text-white transition-colors duration-300 text-sm font-normal">Solutions</Link>
+              <Link href="/about" className="text-gray-300 hover:text-white transition-colors duration-300 text-sm font-normal">About</Link>
+              <Link href="/demo" className="px-5 py-2 bg-white text-black rounded-full text-sm font-normal hover:bg-gray-100 transition-all duration-300 hover:scale-105">
                 Book a demo
-              </button>
+              </Link>
             </div>
 
             {/* Mobile menu toggle - Far Right */}
@@ -56,12 +57,12 @@ export default function SynapseAILanding() {
           {/* Mobile Navigation */}
           <div className={`md:hidden fixed inset-0 bg-black/95 backdrop-blur-lg transition-all duration-500 ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
             <div className="flex flex-col items-center justify-center h-full space-y-8">
-              <a href="#services" className="text-xl text-gray-300 hover:text-white transition-colors font-normal" onClick={() => setIsMenuOpen(false)}>Services</a>
-              <a href="#solutions" className="text-xl text-gray-300 hover:text-white transition-colors font-normal" onClick={() => setIsMenuOpen(false)}>Solutions</a>
-              <a href="#about" className="text-xl text-gray-300 hover:text-white transition-colors font-normal" onClick={() => setIsMenuOpen(false)}>About</a>
-              <button className="px-8 py-3 bg-white text-black rounded-full font-normal hover:bg-gray-100 transition-all duration-300">
+              <Link href="/services" className="text-xl text-gray-300 hover:text-white transition-colors font-normal" onClick={() => setIsMenuOpen(false)}>Services</Link>
+              <Link href="/solutions" className="text-xl text-gray-300 hover:text-white transition-colors font-normal" onClick={() => setIsMenuOpen(false)}>Solutions</Link>
+              <Link href="/about" className="text-xl text-gray-300 hover:text-white transition-colors font-normal" onClick={() => setIsMenuOpen(false)}>About</Link>
+              <Link href="/demo" className="px-8 py-3 bg-white text-black rounded-full font-normal hover:bg-gray-100 transition-all duration-300">
                 Book a demo
-              </button>
+              </Link>
             </div>
           </div>
         </nav>
@@ -81,7 +82,7 @@ export default function SynapseAILanding() {
       <section className="min-h-screen flex items-center justify-center px-6 relative">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className={`text-3xl md:text-5xl lg:text-6xl font-normal mb-8 transition-all duration-1000 delay-500 leading-tight ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}>
-            AI-Powered Financial Intelligence for{' '}
+            AI-Powered Financial Intelligence for{' '}.  
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
               Retail Excellence
             </span>
@@ -92,13 +93,13 @@ export default function SynapseAILanding() {
           </p>
           
           <div className={`flex flex-col sm:flex-row gap-4 justify-center transition-all duration-1000 delay-900 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}>
-            <button className="group px-7 py-3 bg-white text-black rounded-full font-normal hover:bg-gray-100 transition-all duration-300 flex items-center justify-center hover:scale-105 hover:shadow-lg text-sm">
+            <Link href="/demo" className="group px-7 py-3 bg-white text-black rounded-full font-normal hover:bg-gray-100 transition-all duration-300 flex items-center justify-center hover:scale-105 hover:shadow-lg text-sm">
               Book a demo
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-            </button>
-            <button className="px-7 py-3 border border-gray-600 text-white rounded-full font-normal hover:border-white hover:bg-white/5 transition-all duration-300 hover:scale-105 text-sm">
+            </Link>
+            <Link href="/about" className="px-7 py-3 border border-gray-600 text-white rounded-full font-normal hover:border-white hover:bg-white/5 transition-all duration-300 hover:scale-105 text-sm">
               Learn more →
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -314,12 +315,12 @@ export default function SynapseAILanding() {
                 Join retailers increasing profits by 25% with AI-powered financial intelligence
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="px-7 py-3 bg-white text-black rounded-full font-normal hover:bg-gray-100 transition-all duration-300 hover:scale-105 hover:shadow-lg text-sm">
+                <Link href="/demo" className="px-7 py-3 bg-white text-black rounded-full font-normal hover:bg-gray-100 transition-all duration-300 hover:scale-105 hover:shadow-lg text-sm">
                   Book a demo
-                </button>
-                <button className="px-7 py-3 border-2 border-white text-white rounded-full font-normal hover:bg-white hover:text-black transition-all duration-300 hover:scale-105 text-sm">
+                </Link>
+                <Link href="/about" className="px-7 py-3 border-2 border-white text-white rounded-full font-normal hover:bg-white hover:text-black transition-all duration-300 hover:scale-105 text-sm">
                   Learn more →
-                </button>
+                </Link>
               </div>
             </div>
             
@@ -336,12 +337,12 @@ export default function SynapseAILanding() {
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center space-x-2 mb-4">
+              <Link href="/" className="flex items-center space-x-2 mb-4">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
                   <Brain className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-lg font-semibold text-white">SynapseAI</span>
-              </div>
+              </Link>
               <p className="text-gray-400 text-sm">
                 AI-powered financial intelligence for retail excellence
               </p>
@@ -350,18 +351,18 @@ export default function SynapseAILanding() {
             <div>
               <h3 className="font-semibold text-white mb-3">Solutions</h3>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Demand Forecasting</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Inventory Optimization</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Financial Planning</a></li>
+                <li><Link href="/services/demand-forecasting" className="text-gray-400 hover:text-white text-sm transition-colors">Demand Forecasting</Link></li>
+                <li><Link href="/services/inventory-optimization" className="text-gray-400 hover:text-white text-sm transition-colors">Inventory Optimization</Link></li>
+                <li><Link href="/services/financial-planning" className="text-gray-400 hover:text-white text-sm transition-colors">Financial Planning</Link></li>
               </ul>
             </div>
             
             <div>
               <h3 className="font-semibold text-white mb-3">Company</h3>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">About Us</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Careers</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Blog</a></li>
+                <li><Link href="/about" className="text-gray-400 hover:text-white text-sm transition-colors">About Us</Link></li>
+                <li><Link href="/careers" className="text-gray-400 hover:text-white text-sm transition-colors">Careers</Link></li>
+                <li><Link href="/blog" className="text-gray-400 hover:text-white text-sm transition-colors">Blog</Link></li>
               </ul>
             </div>
             
