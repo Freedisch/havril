@@ -30,7 +30,7 @@ export const CTA: FC = () => {
         </h2>
 
         <p className="text-base text-mist mb-12 leading-relaxed font-light">
-          Be among the first to connect MemoAI to your Claude setup.
+          Be among the first to connect Havril to your Claude setup.
           <br className="hidden md:block" />
           No credit card. No setup fees. Just memory that works.
         </p>

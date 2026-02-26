@@ -51,12 +51,12 @@ export const EngineSection: FC = () => {
         <div className="grid md:grid-cols-2 gap-16 mb-20 items-end">
           <h2 className="font-display text-5xl md:text-6xl font-light leading-[1.05] text-cream">
             Intelligence lives inside{' '}
-            <em className="text-gradient not-italic">MemoAI</em>,
+            <em className="text-gradient not-italic">Havril</em>,
             <br />
             not the model.
           </h2>
           <p className="text-base text-mist leading-relaxed font-light">
-            Models don&apos;t decide what to remember — MemoAI does. Every
+            Models don&apos;t decide what to remember — Havril does. Every
             conversation passes through a 5-step pipeline that extracts only
             what matters, keeps the memory graph clean, and surfaces the right
             context at the right time.

@@ -25,11 +25,11 @@ const bodyFont = Sora({
 });
 
 export const metadata: Metadata = {
-  title: 'MemoAI — Memory That Follows You Across Every Model',
+  title: 'Havril — Memory That Follows You Across Every Model',
   description:
     'One memory layer for all your AI models. Chat on Claude, switch to ChatGPT — your context travels with you.',
   openGraph: {
-    title: 'MemoAI — One Memory. Every Model.',
+    title: 'Havril — One Memory. Every Model.',
     description:
       'Persistent AI memory that works across Claude, ChatGPT, Gemini and more.',
     type: 'website',

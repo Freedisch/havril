@@ -12,19 +12,19 @@ export const HowItWorks: FC = () => {
     {
       n: '01',
       title: 'Connect your models',
-      body: 'Sign up and add MemoAI to Claude via MCP, to ChatGPT as a Custom Action. One token. Two minutes.',
+      body: 'Sign up and add Havril to Claude via MCP, to ChatGPT as a Custom Action. One token. Two minutes.',
       detail: 'No API keys stored. No credentials shared.',
     },
     {
       n: '02',
       title: 'Chat normally',
       body: 'Use Claude.ai, ChatGPT.com, Gemini — exactly as you always have. Nothing changes on your end.',
-      detail: 'MemoAI works silently in the background.',
+      detail: 'Havril works silently in the background.',
     },
     {
       n: '03',
       title: 'Memory builds itself',
-      body: "After each conversation, MemoAI's engine distills what matters and stores it. The model fetches it next time.",
+      body: "After each conversation, Havril's engine distills what matters and stores it. The model fetches it next time.",
       detail: 'Dedup, scoring & contradiction resolution included.',
     },
   ];

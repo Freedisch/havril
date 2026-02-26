@@ -9,7 +9,7 @@ interface CodeLine {
 
 export const CodePreview: FC = () => {
   const lines: CodeLine[] = [
-    { t: 'comment', c: '// MemoAI MCP tool — called automatically by Claude' },
+    { t: 'comment', c: '// Havril MCP tool — called automatically by Claude' },
     { t: 'blank', c: '' },
     { t: 'keyword', c: 'tool: ', rest: 'fetch_memories' },
     { t: 'plain', c: '  query:  ', val: '"I am building a Go API"' },
@@ -56,7 +56,7 @@ export const CodePreview: FC = () => {
             <code className="font-mono text-amber text-xs">
               submit_conversation
             </code>{' '}
-            when done. MemoAI handles everything in between.
+            when done. Havril handles everything in between.
           </p>
           <div className="flex flex-col gap-3">
             {perks.map((perk) => (

@@ -25,12 +25,12 @@ export const Features: FC = () => {
     {
       icon: '◇',
       title: 'Contradiction resolution',
-      body: 'Moved cities? Changed jobs? MemoAI detects conflicts and updates your memory profile automatically.',
+      body: 'Moved cities? Changed jobs? Havril detects conflicts and updates your memory profile automatically.',
     },
     {
       icon: '✦',
       title: 'Native MCP for Claude',
-      body: 'Claude calls MemoAI as a tool mid-conversation. Real tool use — no prompt injection hacks.',
+      body: 'Claude calls Havril as a tool mid-conversation. Real tool use — no prompt injection hacks.',
     },
     {
       icon: '⊕',

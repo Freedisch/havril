@@ -8,7 +8,7 @@ export const Footer: FC = () => {
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <div className="font-display text-lg font-medium tracking-wide mb-1">
-            Memo<span className="text-amber">AI</span>
+            Hav<span className="text-amber">ril</span>
           </div>
           <p className="font-mono text-[10px] text-fog tracking-wide">
             One memory. Every model.
@@ -28,7 +28,7 @@ export const Footer: FC = () => {
         </div>
 
         <p className="font-mono text-[10px] text-fog tracking-wide">
-          © 2026 MemoAI
+          © 2026 Havril
         </p>
       </div>
     </footer>

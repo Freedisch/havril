@@ -71,7 +71,7 @@ export const Integrations: FC = () => {
         <em className="italic text-mist font-light">All of them.</em>
       </h2>
       <p className="text-base text-mist mb-16 max-w-md font-light leading-relaxed">
-        MemoAI integrates with every major model platform. Start with Claude on
+        Havril integrates with every major model platform. Start with Claude on
         day one — more platforms ship with each phase.
       </p>
 

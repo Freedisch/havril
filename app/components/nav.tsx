@@ -14,7 +14,7 @@ export const Nav: FC = () => {
       }`}
     >
       <a href="#" className="font-display text-xl font-medium tracking-wide">
-        Memo<span className="text-amber">AI</span>
+        Hav<span className="text-amber">ril</span>
       </a>
 
       {/* Desktop links */}

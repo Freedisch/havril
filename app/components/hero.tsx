@@ -13,7 +13,7 @@ export const Hero: FC = () => {
     '"User prefers minimal dependencies"',
     '"User is based in Kigali, Rwanda"',
     '"User uses Chi router + PostgreSQL"',
-    '"User is working on MemoAI itself"',
+    '"User is working on Havril itself"',
   ];
 
   const typed = useTypewriter(memories, 42, 2400);
