@@ -32,13 +32,7 @@ export const Nav: FC = () => {
 
       <div className="hidden md:flex items-center gap-5">
         <a
-          href="#"
-          className="text-[11px] tracking-widest uppercase text-mist hover:text-cream transition-colors duration-200"
-        >
-          Sign in
-        </a>
-        <a
-          href="#"
+          href="#get-access"
           className="text-[11px] tracking-widest uppercase bg-amber text-ink px-5 py-2.5 font-medium hover:bg-amber/90 transition-all duration-200 hover:-translate-y-px"
         >
           Get Early Access

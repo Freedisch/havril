@@ -1,16 +1,47 @@
-import { FC, useState, FormEvent } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  FC,
+  useState,
+  FormEvent,
+  startTransition,
+  useActionState,
+  useRef,
+} from 'react';
+import { useForm } from 'react-hook-form';
+import { formSchema } from '../utils/waitlist/schema';
+import { submitWaitlistForm } from '../utils/waitlist/action';
+import * as z from 'zod';
 
+type FormValues = z.infer<typeof formSchema>;
 export const CTA: FC = () => {
   const [email, setEmail] = useState<string>('');
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [state, formAction] = useActionState(submitWaitlistForm, {
+    message: '',
+  });
 
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+    },
+  });
   const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
-    if (email.trim()) setSubmitted(true);
+    startTransition(() => {
+      formAction(new FormData(formRef.current!));
+      form.reset();
+    });
+    setSubmitted(true);
   };
 
+  const formRef = useRef<HTMLFormElement>(null);
+
   return (
-    <section className="py-40 px-8 md:px-12 relative overflow-hidden">
+    <section
+      className="py-40 px-8 md:px-12 relative overflow-hidden"
+      id="get-access"
+    >
       <div className="absolute inset-0 grid-bg opacity-40" />
       <div className="absolute inset-0 amber-glow" />
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber/30 to-transparent" />
@@ -37,11 +68,13 @@ export const CTA: FC = () => {
 
         {!submitted ? (
           <form
+            ref={formRef}
             onSubmit={handleSubmit}
             className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
           >
             <input
               type="email"
+              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"

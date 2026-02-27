@@ -69,7 +69,7 @@ export const Hero: FC = () => {
       {/* CTAs */}
       <div className="relative z-10 flex flex-col sm:flex-row items-center gap-4 animate-fade-up delay-400">
         <a
-          href="#"
+          href="#get-access"
           className="bg-amber text-ink px-8 py-3.5 text-[11px] tracking-widest uppercase font-medium hover:bg-amber/90 transition-all duration-200 hover:-translate-y-px"
         >
           Get early access
