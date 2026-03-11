@@ -16,3 +16,7 @@ type ConnectedModel struct {
 	ConnectedAt time.Time `gorm:"autoCreateTime"`
 	LastUsedAt  *time.Time
 }
+
+func (ConnectedModel) TableName() string {
+	return "connected_models"
+}

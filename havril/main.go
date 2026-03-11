@@ -6,13 +6,13 @@ import (
 	"os"
 
 	"github.com/freedisch/havril/internal/api/handlers"
-	"github.com/joho/godotenv"
 	"github.com/freedisch/havril/internal/api/middleware"
 	"github.com/freedisch/havril/internal/store/postgres"
 	"github.com/freedisch/havril/internal/user"
 	"github.com/go-chi/chi/v5"
 	chimid "github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/sessions"
+	"github.com/joho/godotenv"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/github"
@@ -68,6 +68,9 @@ func main() {
 	userSvc := user.NewService(userRepo)
 	authHandler := handlers.NewAuthHandler(userSvc)
 	authMid := middleware.NewAuthMiddleware(userSvc)
+	modelRepo := user.NewModelRepository(db)
+	modelSvc := user.NewModelService(modelRepo)
+	modelsHandler := handlers.NewModelsHandler(modelSvc)
 
 	// Router
 	r := chi.NewRouter()
@@ -82,6 +85,9 @@ func main() {
 	// Protected routes — expanded in Step 3+
 	r.Group(func(r chi.Router) {
 		r.Use(authMid.Authenticate)
+		r.Post("/v1/models/connect", modelsHandler.Connect)
+		r.Get("/v1/models", modelsHandler.List)
+
 		// models, memory routes will be mounted here
 	})
 
