@@ -7,6 +7,19 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	MemoryTypeSemantic   = "semantic"
+	MemoryTypeEpisodic   = "episodic"
+	MemoryTypeProcedural = "procedural"
+	MemoryTypeSummary    = "summary"
+)
+
+const (
+	EmbeddingStatusPending = "pending"
+	EmbeddingStatusSynced  = "synced"
+	EmbeddingStatusFailed  = "failed"
+)
+
 type Memory struct {
 	gorm.Model
 	ID                     string  `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
@@ -24,4 +37,10 @@ type Memory struct {
 	AccessCount            int `gorm:"default:0"`
 	LastAccessed           *time.Time
 	ExpiresAt              *time.Time
+}
+
+func (Memory) TableName() string { return "memories" }
+
+func (m *Memory) IsExpired() bool {
+	return m.ExpiresAt != nil && time.Now().UTC().After(*m.ExpiresAt)
 }
