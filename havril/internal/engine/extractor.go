@@ -10,19 +10,18 @@ import (
 	"time"
 )
 
-
 const (
 	openAIChatURL      = "https://api.openai.com/v1/chat/completions"
 	extractorModel     = "gpt-4o-mini"
 	extractorTimeout   = 30 * time.Second
 	extractorMaxTokens = 1000
 )
- 
+
 type candidateMemory struct {
-	Content string `json:"content"`
-	Type string `json:"type"`
-	ImportanceHint float64 `json:"importance_hint"`
-	Tags []string `json:"Tags"`
+	Content        string   `json:"content"`
+	Type           string   `json:"type"`
+	ImportanceHint float64  `json:"importance_hint"`
+	Tags           []string `json:"Tags"`
 }
 
 type extractionResult struct {
@@ -30,13 +29,13 @@ type extractionResult struct {
 }
 
 type Extractor struct {
-	apiKey string
+	apiKey     string
 	httpClient *http.Client
 }
 
-func newExtractor(apiKey string) *Extractor{
+func newExtractor(apiKey string) *Extractor {
 	return &Extractor{
-		apiKey: apiKey,
+		apiKey:     apiKey,
 		httpClient: &http.Client{Timeout: extractorTimeout},
 	}
 }
@@ -52,11 +51,10 @@ func buildExtractionPrompt(conversation []Message) string {
 	return buf.String()
 }
 
-
-func (e *Extractor) extract(ctx context.Context, conversation []Message) ([]candidateMemory, error){
+func (e *Extractor) extract(ctx context.Context, conversation []Message) ([]candidateMemory, error) {
 	prompt := buildExtractionPrompt(conversation)
 	body, err := json.Marshal(map[string]any{
-		"model":  extractorModel,
+		"model":      extractorModel,
 		"max_tokens": extractorMaxTokens,
 		"messages": []map[string]string{
 			{"role": "system", "content": extractionSystemPrompt},
@@ -67,7 +65,7 @@ func (e *Extractor) extract(ctx context.Context, conversation []Message) ([]cand
 		return nil, fmt.Errorf("extractor: Marshal request %w", err)
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, openAIChatURL, bytes.NewReader((body)))
-	if err != nil{
+	if err != nil {
 		return nil, fmt.Errorf("extractor: build request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -75,7 +73,7 @@ func (e *Extractor) extract(ctx context.Context, conversation []Message) ([]cand
 	req.Header.Set("User-Agent", "havril/1.0")
 
 	resp, err := e.httpClient.Do(req)
-	if err != nil{
+	if err != nil {
 		return nil, fmt.Errorf("extractor: http request: %w", err)
 	}
 	defer resp.Body.Close()
@@ -85,11 +83,11 @@ func (e *Extractor) extract(ctx context.Context, conversation []Message) ([]cand
 		return nil, fmt.Errorf("extractor: read response: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK{
+	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("extractor: openai status %d: %s", resp.StatusCode, string(respBody))
 	}
 
-		var completion struct {
+	var completion struct {
 		Choices []struct {
 			Message struct {
 				Content string `json:"content"`
@@ -102,7 +100,7 @@ func (e *Extractor) extract(ctx context.Context, conversation []Message) ([]cand
 	if len(completion.Choices) == 0 {
 		return nil, fmt.Errorf("extractor: openai returned no choices")
 	}
- 
+
 	// Parse the structured JSON inside the LLM's message content
 	var result extractionResult
 	if err := json.Unmarshal([]byte(completion.Choices[0].Message.Content), &result); err != nil {
@@ -110,7 +108,7 @@ func (e *Extractor) extract(ctx context.Context, conversation []Message) ([]cand
 		// rather than failing the whole submission. The conversation is not lost.
 		return nil, nil
 	}
- 
+
 	return result.Memories, nil
 }
 
@@ -147,4 +145,3 @@ Memory types:
 - procedural: how they prefer to do things (prefers X, always does Y)
  
 If there are no meaningful facts to extract, return: {"memories": []}`
- 

@@ -162,7 +162,6 @@ func (s *QdrantStore) Search(ctx context.Context, userID uuid.UUID, vector []flo
 
 }
 
-
 func (s *QdrantStore) Delete(ctx context.Context, id uuid.UUID) error {
 	_, err := s.client.Delete(ctx, &qdrant.DeletePoints{
 		CollectionName: collectionName,

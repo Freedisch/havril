@@ -13,29 +13,29 @@ const defaultDedupThreshold = 0.92
 
 type Deduplicator struct {
 	embedder embedding.Embedder
-	vectors vector.Store
+	vectors  vector.Store
 	thresold float32
 }
 
-func newDeduplicator(embedder embedding.Embedder, vector vector.Store, thresold float64) *Deduplicator{
-	if thresold == 0{
+func newDeduplicator(embedder embedding.Embedder, vector vector.Store, thresold float64) *Deduplicator {
+	if thresold == 0 {
 		thresold = defaultDedupThreshold
 	}
 	return &Deduplicator{
 		embedder: embedder,
-		vectors: vector,
+		vectors:  vector,
 		thresold: float32(thresold),
 	}
 }
 
-func (d *Deduplicator) isDuplicate(ctx context.Context, userID uuid.UUID, content string)(bool, []float32, error){
+func (d *Deduplicator) isDuplicate(ctx context.Context, userID uuid.UUID, content string) (bool, []float32, error) {
 	vec, err := d.embedder.Embed(ctx, content)
-	if err != nil{
+	if err != nil {
 		return false, nil, fmt.Errorf("deduplicator: embed candidate %w", err)
 	}
 
 	hits, err := d.vectors.Search(ctx, userID, vec, 1)
-	if err != nil{
+	if err != nil {
 		return false, nil, fmt.Errorf("deduplicator: vector search %w", err)
 	}
 

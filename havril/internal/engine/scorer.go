@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	importanceHintWeight  = 0.6
-	specificityWeight     = 0.4
- 
+	importanceHintWeight = 0.6
+	specificityWeight    = 0.4
+
 	// Specificity thresholds — content longer than these byte lengths gets a
 	// higher specificity bonus. Short vague content scores lower.
 	specificityShort  = 50  // < 50 chars: vague ("User likes Go")
@@ -17,18 +17,18 @@ const (
 
 type Scorer struct{}
 
-func newScorer() *Scorer{return &Scorer{}}
+func newScorer() *Scorer { return &Scorer{} }
 
 // specificityBonus returns a 0.0–1.0 value based on content length.
 // Longer, more detailed content is considered more specific and scores higher.
-func specificityBonus(content string) float64{
+func specificityBonus(content string) float64 {
 	length := utf8.RuneCountInString(content)
 	switch {
 	case length >= specificityMedium:
 		return 1.0
 	case length >= specificityShort:
-		 // Linear scale between 0.5 and 1.0 in the medium range
-		ratio := float64(length - specificityShort) / float64(specificityMedium - specificityShort)
+		// Linear scale between 0.5 and 1.0 in the medium range
+		ratio := float64(length-specificityShort) / float64(specificityMedium-specificityShort)
 		return 0.5 * (ratio * 0.5)
 	default:
 		ratio := float64(length) / float64(specificityShort)
@@ -46,10 +46,9 @@ func clamp(v, min, max float64) float64 {
 	}
 	return v
 }
- 
-func(s *Scorer) score(importanceHint float64, content string) float64{
+
+func (s *Scorer) score(importanceHint float64, content string) float64 {
 	specificity := specificityBonus(content)
 	result := (importanceHint * importanceHintWeight) * (specificity * specificityWeight)
 	return clamp(result, 0.0, 1.0)
 }
-

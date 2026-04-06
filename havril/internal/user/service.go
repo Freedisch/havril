@@ -59,19 +59,19 @@ func generateToken() (rawToken, tokenHash, tokenPrefix string, err error) {
 	return
 }
 
-
 type contextKey string
+
 const userIDKey contextKey = "userID"
 
 // Middleware calls this to store the user ID
 func WithUserID(ctx context.Context, id uuid.UUID) context.Context {
-    return context.WithValue(ctx, userIDKey, id)
+	return context.WithValue(ctx, userIDKey, id)
 }
 
 func UserIDFromContext(ctx context.Context) uuid.UUID {
-    id, ok := ctx.Value(userIDKey).(uuid.UUID)
-    if !ok {
-        panic("userID not found in context — auth middleware missing")
-    }
-    return id
+	id, ok := ctx.Value(userIDKey).(uuid.UUID)
+	if !ok {
+		panic("userID not found in context — auth middleware missing")
+	}
+	return id
 }

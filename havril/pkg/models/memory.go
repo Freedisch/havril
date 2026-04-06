@@ -23,11 +23,11 @@ const (
 
 type Memory struct {
 	gorm.Model
-	ID                     uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	UserID                 uuid.UUID  `gorm:"type:uuid;not null;index"`
-	Content                string  `gorm:"not null"`
-	Type                   string  `gorm:"not null;check:type IN ('semantic','episodic','procedural','summary')"`
-	Importance             float64 `gorm:"default:0.5"`
+	ID                     uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	UserID                 uuid.UUID `gorm:"type:uuid;not null;index"`
+	Content                string    `gorm:"not null"`
+	Type                   string    `gorm:"not null;check:type IN ('semantic','episodic','procedural','summary')"`
+	Importance             float64   `gorm:"default:0.5"`
 	SourceModel            string
 	SourcePlatform         string
 	Tags                   pq.StringArray `gorm:"type:text[]"`
