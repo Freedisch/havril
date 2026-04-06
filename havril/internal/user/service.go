@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/freedisch/havril/pkg/models"
+	"github.com/google/uuid"
 )
 
 type Service struct {
@@ -56,4 +57,21 @@ func generateToken() (rawToken, tokenHash, tokenPrefix string, err error) {
 	tokenHash = hex.EncodeToString(sum[:])
 	tokenPrefix = rawToken[:13]
 	return
+}
+
+
+type contextKey string
+const userIDKey contextKey = "userID"
+
+// Middleware calls this to store the user ID
+func WithUserID(ctx context.Context, id uuid.UUID) context.Context {
+    return context.WithValue(ctx, userIDKey, id)
+}
+
+func UserIDFromContext(ctx context.Context) uuid.UUID {
+    id, ok := ctx.Value(userIDKey).(uuid.UUID)
+    if !ok {
+        panic("userID not found in context — auth middleware missing")
+    }
+    return id
 }
