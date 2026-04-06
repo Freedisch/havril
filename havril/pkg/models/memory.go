@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
@@ -22,8 +23,8 @@ const (
 
 type Memory struct {
 	gorm.Model
-	ID                     string  `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	UserID                 string  `gorm:"type:uuid;not null;index"`
+	ID                     uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	UserID                 uuid.UUID  `gorm:"type:uuid;not null;index"`
 	Content                string  `gorm:"not null"`
 	Type                   string  `gorm:"not null;check:type IN ('semantic','episodic','procedural','summary')"`
 	Importance             float64 `gorm:"default:0.5"`
