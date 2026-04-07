@@ -26,7 +26,7 @@ func specificityBonus(content string) float64 {
 	switch {
 	case length >= specificityMedium:
 		return 1.0
-	case length >= specificityShort:
+	case length <= specificityShort:
 		// Linear scale between 0.5 and 1.0 in the medium range
 		ratio := float64(length-specificityShort) / float64(specificityMedium-specificityShort)
 		return 0.5 * (ratio * 0.5)
@@ -49,6 +49,6 @@ func clamp(v, min, max float64) float64 {
 
 func (s *Scorer) score(importanceHint float64, content string) float64 {
 	specificity := specificityBonus(content)
-	result := (importanceHint * importanceHintWeight) * (specificity * specificityWeight)
+	result := (importanceHint * importanceHintWeight) + (specificity * specificityWeight)
 	return clamp(result, 0.0, 1.0)
 }
