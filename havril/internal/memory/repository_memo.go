@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/freedisch/havril/internal/embedding"
 	"github.com/freedisch/havril/internal/store/vector"
@@ -128,3 +129,18 @@ func (r *Repository) SetInative(ctx context.Context, id, userID uuid.UUID) error
 	_ = r.vectors.SetInative(ctx, id)
 	return nil
 }
+
+// IncrementAccess bumps the access_count and updates last_accessed.
+// Called every time a memory is returned in a fetch response.
+// Uses a raw update to avoid loading the full record.
+func (r *Repository) IncrementAccess(ctx context.Context, id uuid.UUID) error {
+	now := time.Now().UTC()
+	return r.db.WithContext(ctx).
+		Model(&models.Memory{}).
+		Where("id = ?", id).
+		Updates(map[string]any{
+			"access_count":  gorm.Expr("access_count + 1"),
+			"last_accessed": now,
+		}).Error
+}
+ 
