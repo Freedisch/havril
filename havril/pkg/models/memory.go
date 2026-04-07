@@ -45,3 +45,15 @@ func (Memory) TableName() string { return "memories" }
 func (m *Memory) IsExpired() bool {
 	return m.ExpiresAt != nil && time.Now().UTC().After(*m.ExpiresAt)
 }
+
+// Message is a single turn in a conversation submitted to the Memory Engine.
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+// EngineResult is returned by the Memory Engine after processing a conversation.
+type EngineResult struct {
+	MemoriesCreated int
+	MemoriesUpdated int
+}

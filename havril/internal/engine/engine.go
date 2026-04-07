@@ -5,20 +5,16 @@ import (
 	"log/slog"
 
 	"github.com/freedisch/havril/internal/embedding"
-	"github.com/freedisch/havril/internal/memory"
 	"github.com/freedisch/havril/internal/store/vector"
 	"github.com/freedisch/havril/pkg/models"
 	"github.com/google/uuid"
 )
 
-type Message struct {
-	Role    string `json:"Role"`
-	Content string `json:"Content"`
-}
-
-type EngineResult struct {
-	MemoriesCreated int
-	MemoriesUpdated int
+// memoryWriter is the subset of memory.Repository that the engine needs.
+// Defined here to avoid an import cycle with the memory package.
+type memoryWriter interface {
+	Create(ctx context.Context, m *models.Memory) error
+	SetInative(ctx context.Context, id, userID uuid.UUID) error
 }
 
 type Config struct {
@@ -29,16 +25,16 @@ type Config struct {
 }
 
 type Engine struct {
-	extractor   *Extractor
+	extractor    *Extractor
 	deduplicator *Deduplicator
 	classifier   *Classifier
 	scorer       *Scorer
-	repo         *memory.Repository
+	repo         memoryWriter
 	contradictLo float32
 	contradictHi float32
 }
 
-func New(cfg Config, embedder embedding.Embedder, vectors vector.Store, repo *memory.Repository) *Engine {
+func New(cfg Config, embedder embedding.Embedder, vectors vector.Store, repo memoryWriter) *Engine {
 	if cfg.ContradictLower == 0{
 		cfg.ContradictLower = 0.75
 	}
@@ -102,9 +98,9 @@ func (e *Engine) resolveContradictions(ctx context.Context, userID uuid.UUID, co
 //  5. Classify the memory type
 //  6. Score final importance
 //  7. Save to Postgres + Qdrant via repository
-func(e *Engine) ProcessConversation(ctx context.Context, userID uuid.UUID, conversation []Message, sourceModel string) (EngineResult, error){
+func (e *Engine) ProcessConversation(ctx context.Context, userID uuid.UUID, conversation []models.Message, sourceModel string) (models.EngineResult, error) {
 
-	var result EngineResult
+	var result models.EngineResult
 	// Step 1 — Extract candidate memories from the conversation
 	candidates, err := e.extractor.extract(ctx, conversation)
 	if err != nil{

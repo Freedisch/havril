@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/freedisch/havril/pkg/models"
 )
 
 const (
@@ -40,7 +42,7 @@ func newExtractor(apiKey string) *Extractor {
 	}
 }
 
-func buildExtractionPrompt(conversation []Message) string {
+func buildExtractionPrompt(conversation []models.Message) string {
 	var buf bytes.Buffer
 	for _, msg := range conversation {
 		buf.WriteString(msg.Role)
@@ -51,7 +53,7 @@ func buildExtractionPrompt(conversation []Message) string {
 	return buf.String()
 }
 
-func (e *Extractor) extract(ctx context.Context, conversation []Message) ([]candidateMemory, error) {
+func (e *Extractor) extract(ctx context.Context, conversation []models.Message) ([]candidateMemory, error) {
 	prompt := buildExtractionPrompt(conversation)
 	body, err := json.Marshal(map[string]any{
 		"model":      extractorModel,

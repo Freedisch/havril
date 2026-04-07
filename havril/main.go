@@ -8,6 +8,7 @@ import (
 	"github.com/freedisch/havril/internal/api/handlers"
 	"github.com/freedisch/havril/internal/api/middleware"
 	"github.com/freedisch/havril/internal/embedding"
+	"github.com/freedisch/havril/internal/engine"
 	"github.com/freedisch/havril/internal/memory"
 	"github.com/freedisch/havril/internal/store/postgres"
 	"github.com/freedisch/havril/internal/store/vector"
@@ -88,7 +89,10 @@ func main() {
 		log.Fatalf("init embedder: %v", err)
 	}
 	memoryRepo := memory.NewRepository(db, vectorStore, embedder)
-	memorySvc := memory.NewService(memoryRepo)
+	eng := engine.New(engine.Config{
+		OpenAIAPIKey: mustEnv("OPENAI_API_KEY"),
+	}, embedder, vectorStore, memoryRepo)
+	memorySvc := memory.NewService(memoryRepo, eng)
 	memoryHandler := handlers.NewMemoryHandler(memorySvc)
 
 	// Router
