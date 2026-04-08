@@ -76,7 +76,8 @@ func main() {
 	modelSvc := user.NewModelService(modelRepo)
 	modelsHandler := handlers.NewModelsHandler(modelSvc)
 	qdrantHost := getEnv("QDRANT_HOST", "localhost:6334")
-	vectorStore, err := vector.New(qdrantHost)
+	qdrantAPIKey := os.Getenv("QDRANT_API_KEY")
+	vectorStore, err := vector.New(qdrantHost, qdrantAPIKey)
 	if err != nil {
 		log.Fatalf("connect qdrant: %v", err)
 	}

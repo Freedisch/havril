@@ -2,15 +2,24 @@ package vector
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/qdrant/go-client/qdrant"
 
-	//qdrant "github.com/qdrant/go-client/qdrant"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
+// apiKeyCredentials injects the Qdrant API key into every gRPC call.
+type apiKeyCredentials struct{ key string }
+
+func (a apiKeyCredentials) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
+	return map[string]string{"api-key": a.key}, nil
+}
+func (a apiKeyCredentials) RequireTransportSecurity() bool { return true }
 
 const collectionName = "memories"
 
@@ -36,8 +45,10 @@ type QdrantStore struct {
 
 // New connects to Qdrant over gRPC and returns a ready Store.
 // host should be "localhost:6334" (the default Qdrant gRPC port).
-func New(host string) (*QdrantStore, error) {
-	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+// If apiKey is non-empty, TLS + API-key auth are used (required for Qdrant Cloud).
+func New(host, apiKey string) (*QdrantStore, error) {
+	opts := dialOpts(apiKey)
+	conn, err := grpc.NewClient(host, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("qdrant: failed to connect to %s: %w", host, err)
 	}
@@ -45,15 +56,27 @@ func New(host string) (*QdrantStore, error) {
 		client: qdrant.NewPointsClient(conn),
 		conn:   conn,
 	}, nil
+}
 
+// dialOpts returns the gRPC dial options for the given API key.
+// No key → plain insecure (local dev); key present → TLS + per-RPC API-key header.
+func dialOpts(apiKey string) []grpc.DialOption {
+	if apiKey == "" {
+		return []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	}
+	return []grpc.DialOption{
+		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})),
+		grpc.WithPerRPCCredentials(apiKeyCredentials{key: apiKey}),
+	}
 }
 
 func (s *QdrantStore) Close() error {
 	return s.conn.Close()
 }
 
-func EnsureCollection(ctx context.Context, host string) error {
-	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func EnsureCollection(ctx context.Context, host, apiKey string) error {
+	opts := dialOpts(apiKey)
+	conn, err := grpc.NewClient(host, opts...)
 	if err != nil {
 		return fmt.Errorf("qdrant: connect for setup: %w", err)
 	}
