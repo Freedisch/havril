@@ -113,6 +113,8 @@ func main() {
 
 		r.Get("/v1/memory", memoryHandler.List)
 		r.Get("/v1/memory/{id}", memoryHandler.GetByID)
+		r.Post("/v1/memory/submit", memoryHandler.Submit)
+		r.Get("/v1/memory/fetch", memoryHandler.Fetch)
 
 		// models, memory routes will be mounted here
 
