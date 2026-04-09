@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -111,10 +112,10 @@ func (h *MemoryHandler) Submit(w http.ResponseWriter, r *http.Request) {
  
 	result, err := h.service.Submit(r.Context(), userID, body.Conversation, body.SourceModel)
 	if err != nil {
+		slog.Error("engine failed", "error", err)
 		writeError(w, "engine_error", "failed to process conversation", http.StatusUnprocessableEntity)
 		return
 	}
- 
 	writeJSON(w, result, http.StatusOK)
 }
 
