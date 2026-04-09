@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MemoAI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #09090b;
+      --surface:  #18181b;
+      --border:   #27272a;
+      --muted:    #52525b;
+      --subtle:   #a1a1aa;
+      --text:     #f4f4f5;
+      --accent:   #e4e4e7;
+      --green:    #4ade80;
+      --red:      #f87171;
+      --radius:   8px;
+    }
+
+    body {
+      width: 320px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      width: 28px;
+      height: 28px;
+      background: var(--text);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo svg { color: var(--bg); }
+
+    h1 {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    h1 span {
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: var(--subtle);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .status-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .status-dot.error     { background: var(--red); }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 9px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 14px;
+    }
+
+    input:focus { border-color: var(--subtle); }
+    input::placeholder { color: var(--muted); }
+
+    .row { display: flex; gap: 8px; }
+
+    button {
+      flex: 1;
+      padding: 9px 14px;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+    .btn-primary:hover { background: var(--accent); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--subtle);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 8px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .platforms {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .platform {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--subtle);
+    }
+
+    .platform-name { color: var(--text); }
+
+    .badge {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .badge-active   { background: rgba(74,222,128,0.1); color: var(--green); }
+    .badge-inactive { background: var(--border); color: var(--muted); }
+
+    #msg {
+      margin-top: 12px;
+      font-size: 12px;
+      text-align: center;
+      min-height: 16px;
+      color: var(--subtle);
+    }
+    #msg.success { color: var(--green); }
+    #msg.error   { color: var(--red); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 8v4l3 3"/>
+    </svg>
+  </div>
+  <h1>MemoAI <span>/ memory</span></h1>
+</header>
+
+<div class="status-bar">
+  <div class="status-dot" id="status-dot"></div>
+  <span id="status-text">Not connected</span>
+</div>
+
+<label>Server URL</label>
+<input id="serverUrl" type="url" placeholder="http://localhost:8080" />
+
+<label>API Token</label>
+<input id="token" type="password" placeholder="memo_..." />
+
+<div class="row">
+  <button class="btn-ghost" id="test-btn">Test</button>
+  <button class="btn-primary" id="save-btn">Save</button>
+</div>
+
+<div class="divider"></div>
+
+<div class="stats">
+  <div class="stat">
+    <span class="stat-value" id="stat-memories">—</span>
+    <span class="stat-label">Memories</span>
+  </div>
+  <div class="stat">
+    <span class="stat-value" id="stat-models">—</span>
+    <span class="stat-label">Models</span>
+  </div>
+  <div class="stat">
+    <span class="stat-value" id="stat-sessions">—</span>
+    <span class="stat-label">Sessions</span>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="platforms">
+  <div class="platform">
+    <span class="platform-name">Claude.ai</span>
+    <span class="badge badge-active" id="badge-claude">active</span>
+  </div>
+  <div class="platform">
+    <span class="platform-name">ChatGPT</span>
+    <span class="badge badge-active" id="badge-chatgpt">active</span>
+  </div>
+  <div class="platform">
+    <span class="platform-name">Gemini</span>
+    <span class="badge badge-active" id="badge-gemini">active</span>
+  </div>
+</div>
+
+<p id="msg"></p>
+
+<script src="popup.js"></script>
+</body>
+</html>
