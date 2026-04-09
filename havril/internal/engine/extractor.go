@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/freedisch/havril/pkg/models"
@@ -103,15 +105,37 @@ func (e *Extractor) extract(ctx context.Context, conversation []models.Message) 
 		return nil, fmt.Errorf("extractor: openai returned no choices")
 	}
 
-	// Parse the structured JSON inside the LLM's message content
+	// Parse the structured JSON inside the LLM's message content.
+	// Strip markdown code fences that the model sometimes wraps around its output.
+	raw := stripCodeFence(completion.Choices[0].Message.Content)
 	var result extractionResult
-	if err := json.Unmarshal([]byte(completion.Choices[0].Message.Content), &result); err != nil {
-		// LLM occasionally returns slightly malformed JSON — treat as zero memories
-		// rather than failing the whole submission. The conversation is not lost.
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
+		slog.Warn("extractor: failed to parse LLM response as JSON, treating as zero memories",
+			"error", err,
+			"raw", raw,
+		)
 		return nil, nil
 	}
 
 	return result.Memories, nil
+}
+
+// stripCodeFence removes optional markdown code fences that the model sometimes
+// wraps around its JSON output (e.g. ```json\n...\n```).
+func stripCodeFence(s string) string {
+	s = strings.TrimSpace(s)
+	if strings.HasPrefix(s, "```") {
+		// Remove the opening fence line
+		if idx := strings.Index(s, "\n"); idx != -1 {
+			s = s[idx+1:]
+		}
+		// Remove the closing fence
+		if idx := strings.LastIndex(s, "```"); idx != -1 {
+			s = s[:idx]
+		}
+		s = strings.TrimSpace(s)
+	}
+	return s
 }
 
 const extractionSystemPrompt = `You are a memory extraction engine. Your job is to read a conversation and extract persistent, meaningful facts about the USER ONLY — not about the assistant.

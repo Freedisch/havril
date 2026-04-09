@@ -107,7 +107,8 @@ func (e *Engine) ProcessConversation(ctx context.Context, userID uuid.UUID, conv
 		return result, err
 	}
 
-	if len(candidates) == 0{
+	if len(candidates) == 0 {
+		slog.Info("engine: no candidates extracted from conversation", "user_id", userID)
 		return result, nil
 	}
 
