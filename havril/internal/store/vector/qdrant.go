@@ -69,21 +69,43 @@ func EnsureCollection(ctx context.Context, hostport, apiKey string) error {
 	if err != nil {
 		return fmt.Errorf("qdrant: check collection: %w", err)
 	}
-	if exists {
-		return nil
-	}
-
-	return client.CreateCollection(ctx, &qdrant.CreateCollection{
-		CollectionName: collectionName,
-		VectorsConfig: &qdrant.VectorsConfig{
-			Config: &qdrant.VectorsConfig_Params{
-				Params: &qdrant.VectorParams{
-					Size:     1536,
-					Distance: qdrant.Distance_Cosine,
+	if !exists {
+		if err := client.CreateCollection(ctx, &qdrant.CreateCollection{
+			CollectionName: collectionName,
+			VectorsConfig: &qdrant.VectorsConfig{
+				Config: &qdrant.VectorsConfig_Params{
+					Params: &qdrant.VectorParams{
+						Size:     1536,
+						Distance: qdrant.Distance_Cosine,
+					},
 				},
 			},
-		},
-	})
+		}); err != nil {
+			return fmt.Errorf("qdrant: create collection: %w", err)
+		}
+	}
+
+	// Always ensure payload indexes exist — required for filtering by these fields.
+	// CreateFieldIndex is idempotent: safe to call on an existing index.
+	keywordIndex := qdrant.FieldType_FieldTypeKeyword
+	for _, field := range []string{"user_id", "type"} {
+		if _, err := client.CreateFieldIndex(ctx, &qdrant.CreateFieldIndexCollection{
+			CollectionName: collectionName,
+			FieldName:      field,
+			FieldType:      &keywordIndex,
+		}); err != nil {
+			return fmt.Errorf("qdrant: create index on %s: %w", field, err)
+		}
+	}
+	boolIndex := qdrant.FieldType_FieldTypeBool
+	if _, err := client.CreateFieldIndex(ctx, &qdrant.CreateFieldIndexCollection{
+		CollectionName: collectionName,
+		FieldName:      "is_active",
+		FieldType:      &boolIndex,
+	}); err != nil {
+		return fmt.Errorf("qdrant: create index on is_active: %w", err)
+	}
+	return nil
 }
 
 // splitHostPort splits "host:port" into host and port int.
