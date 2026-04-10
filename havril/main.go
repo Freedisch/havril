@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/freedisch/havril/internal/api/handlers"
 	"github.com/freedisch/havril/internal/api/middleware"
@@ -75,10 +77,14 @@ func main() {
 	modelRepo := user.NewModelRepository(db)
 	modelSvc := user.NewModelService(modelRepo)
 	modelsHandler := handlers.NewModelsHandler(modelSvc)
-	qdrantHost := getEnv("QDRANT_HOST", "localhost:6334")
-	vectorStore, err := vector.New(qdrantHost)
+	qdrantHost := strings.TrimPrefix(strings.TrimPrefix(getEnv("QDRANT_HOST", "localhost:6334"), "https://"), "http://")
+	qdrantAPIKey := os.Getenv("QDRANT_API_KEY")
+	vectorStore, err := vector.New(qdrantHost, qdrantAPIKey)
 	if err != nil {
 		log.Fatalf("connect qdrant: %v", err)
+	}
+	if err := vector.EnsureCollection(context.Background(), qdrantHost, qdrantAPIKey); err != nil {
+		log.Fatalf("failed to ensure qdrant collection: %v", err)
 	}
 	embedder, err := embedding.New(embedding.Config{
 		Provider: getEnv("EMBEDDING_PROVIDER", "openai"),
