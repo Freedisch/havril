@@ -136,7 +136,8 @@ const MemoryFlow: FC = () => {
           <div className="absolute -inset-3 rounded-full border border-amber/6" />
           <div className="absolute -inset-6 rounded-full border border-amber/3" />
           <div className="relative w-20 h-20 rounded-full bg-ink2 border border-amber/30 flex flex-col items-center justify-center gap-0.5 animate-glow-pulse">
-            <span className="text-amber text-lg">◉</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/harvil.png" alt="Havril" width={28} height={33} className="opacity-80" />
             <span className="font-mono text-[9px] text-amber/70 tracking-widest uppercase">
               memory
             </span>

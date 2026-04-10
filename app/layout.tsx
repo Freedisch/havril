@@ -28,6 +28,9 @@ export const metadata: Metadata = {
   title: 'Havril — Memory That Follows You Across Every Model',
   description:
     'One memory layer for all your AI models. Chat on Claude, switch to ChatGPT — your context travels with you.',
+  icons: {
+    icon: '/havril.svg',
+  },
   openGraph: {
     title: 'Havril — One Memory. Every Model.',
     description:
