@@ -13,8 +13,14 @@ export const Nav: FC = () => {
         scrolled ? 'bg-ink/90 backdrop-blur-xl border-b border-edge' : ''
       }`}
     >
-      <a href="#" className="font-display text-xl font-medium tracking-wide">
-        Hav<span className="text-amber">ril</span>
+      <a href="#">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/havril.png"
+          alt="Havril"
+          height={24}
+          style={{ height: '50px', width: 'auto' }}
+        />
       </a>
 
       {/* Desktop links */}
