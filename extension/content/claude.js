@@ -3,6 +3,14 @@
 const PLATFORM = 'claude.ai';
 const SOURCE_MODEL = 'claude-sonnet-4-5';
 
+function getClaudeInput() {
+  return (
+    document.querySelector('[contenteditable="true"][data-placeholder]') ||
+    document.querySelector('.ProseMirror') ||
+    document.querySelector('[contenteditable="true"]')
+  );
+}
+
 // Extract all conversation turns from the Claude.ai DOM.
 function extractConversation() {
   const messages = [];
@@ -79,6 +87,9 @@ async function submitConversation() {
 function init() {
   injectSubmitButton(submitConversation);
   loadMemories();
+
+  const query = document.title || 'general context';
+  injectMemoriesIntoInput(getClaudeInput, query);
 }
 
 // Claude.ai is a SPA — re-init when the URL changes (new conversation)
