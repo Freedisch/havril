@@ -1,83 +1,122 @@
-// popup/popup.js
-
 const $ = (id) => document.getElementById(id);
+const DEFAULT_SERVER = 'http://localhost:8080';
 
-function setStatus(state, text) {
-  const dot = $("status-dot");
-  dot.className = "status-dot";
-  if (state === "connected") dot.classList.add("connected");
-  if (state === "error")     dot.classList.add("error");
-  $("status-text").textContent = text;
+function showView(name) {
+  ['login', 'connecting', 'connected'].forEach((v) => {
+    $(`view-${v}`).style.display = v === name ? 'flex' : 'none';
+  });
 }
 
-function setMsg(text, type = "") {
-  const el = $("msg");
+function setMsg(text, type = '') {
+  const el = $('msg');
   el.textContent = text;
   el.className = type;
 }
 
-// Load saved config into inputs on open
-chrome.storage.sync.get(["token", "serverUrl"], (result) => {
-  if (result.serverUrl) $("serverUrl").value = result.serverUrl;
-  if (result.token)     $("token").value     = result.token;
-  if (result.token && result.serverUrl) {
-    testConnection(result.serverUrl, result.token, false);
-  }
-});
+function getServerUrl() {
+  return $('serverUrl').value.trim().replace(/\/$/, '') || DEFAULT_SERVER;
+}
 
-// Save button
-$("save-btn").addEventListener("click", () => {
-  const serverUrl = $("serverUrl").value.trim().replace(/\/$/, "");
-  const token     = $("token").value.trim();
+function applyUserInfo({ userName, userEmail, userAvatar }) {
+  if (userName) $('user-name').textContent = userName;
+  if (userEmail) $('user-email').textContent = userEmail;
+  if (userAvatar) $('user-avatar').src = userAvatar;
+}
 
-  if (!serverUrl) { setMsg("Server URL is required", "error"); return; }
-  if (!token)     { setMsg("Token is required", "error"); return; }
+chrome.storage.sync.get(
+  ['token', 'serverUrl', 'userName', 'userEmail', 'userAvatar'],
+  async (stored) => {
+    if (stored.serverUrl) $('serverUrl').value = stored.serverUrl;
 
-  chrome.storage.sync.set({ serverUrl, token }, () => {
-    setMsg("Saved", "success");
-    testConnection(serverUrl, token, true);
+    if (stored.token) {
+      applyUserInfo(stored);
+      await loadConnectedState(
+        stored.serverUrl || DEFAULT_SERVER,
+        stored.token,
+      );
+    } else {
+      showView('login');
+    }
+  },
+);
+
+// ── AUTH_SUCCESS from background (popup was open during OAuth) ────────────────
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.type !== 'AUTH_SUCCESS') return;
+  applyUserInfo(message);
+  chrome.storage.sync.get(['token', 'serverUrl'], async (stored) => {
+    await loadConnectedState(stored.serverUrl || DEFAULT_SERVER, stored.token);
   });
 });
 
-// Test button
-$("test-btn").addEventListener("click", () => {
-  const serverUrl = $("serverUrl").value.trim().replace(/\/$/, "");
-  const token     = $("token").value.trim();
-  if (!serverUrl || !token) { setMsg("Enter server URL and token first", "error"); return; }
-  testConnection(serverUrl, token, true);
+// ── OAuth buttons ─────────────────────────────────────────────────────────────
+
+async function startOAuth(provider) {
+  const serverUrl = getServerUrl();
+  chrome.storage.sync.set({ serverUrl });
+  showView('connecting');
+
+  chrome.runtime.sendMessage(
+    { type: 'START_OAUTH', payload: { serverUrl, provider } },
+    (res) => {
+      if (!res?.ok) {
+        showView('login');
+        setMsg(res?.error || 'Could not open login tab', 'error');
+      }
+    },
+  );
+}
+
+$('btn-google').addEventListener('click', () => startOAuth('google'));
+$('btn-github').addEventListener('click', () => startOAuth('github'));
+$('btn-cancel').addEventListener('click', () => showView('login'));
+
+// ── Advanced toggle ───────────────────────────────────────────────────────────
+
+$('advanced-toggle').addEventListener('click', () => {
+  const open = $('advanced').classList.toggle('open');
+  $('advanced-toggle').textContent = (open ? '▾' : '▸') + ' Server URL';
 });
 
-async function testConnection(serverUrl, token, showResult) {
-  setStatus("", "Connecting…");
+// ── Connected state ───────────────────────────────────────────────────────────
 
+async function loadConnectedState(serverUrl, token) {
   try {
-    const response = await fetch(`${serverUrl}/v1/health`);
-    if (!response.ok) throw new Error(`Server returned ${response.status}`);
-
-    // Try fetching memories to verify the token works
-    const memRes = await fetch(`${serverUrl}/v1/memory`, {
+    const res = await fetch(`${serverUrl}/v1/memory`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (memRes.status === 401) {
-      setStatus("error", "Invalid token");
-      if (showResult) setMsg("Token is invalid", "error");
+    if (res.status === 401) {
+      await chrome.storage.sync.remove([
+        'token',
+        'userName',
+        'userEmail',
+        'userAvatar',
+      ]);
+      showView('login');
+      setMsg('Session expired — please sign in again', 'error');
       return;
     }
 
-    if (!memRes.ok) throw new Error(`Memory API returned ${memRes.status}`);
+    const data = await res.json();
+    $('stat-memories').textContent = data.count ?? data.memories?.length ?? 0;
 
-    const data = await memRes.json();
-    const count = data.count ?? data.memories?.length ?? 0;
-
-    setStatus("connected", "Connected");
-    $("stat-memories").textContent = count;
-    $("stat-models").textContent   = "3";
-    $("stat-sessions").textContent  = "—";
-
-    if (showResult) setMsg("Connection successful", "success");
-  } catch (err) {
-    setStatus("error", "Connection failed");
-    if (showResult) setMsg(err.message, "error");
+    showView('connected');
+  } catch {
+    showView('login');
+    setMsg('Could not reach server', 'error');
   }
 }
+
+// ── Logout ────────────────────────────────────────────────────────────────────
+
+$('btn-logout').addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: 'LOGOUT' }, () => {
+    $('user-name').textContent = '—';
+    $('user-email').textContent = '—';
+    $('user-avatar').src = '';
+    showView('login');
+    setMsg('');
+  });
+});

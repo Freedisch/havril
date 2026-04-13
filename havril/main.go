@@ -110,6 +110,7 @@ func main() {
 	r.Get("/v1/health", healthHandler)
 	r.Get("/v1/auth/{provider}", authHandler.Begin)
 	r.Get("/v1/auth/{provider}/callback", authHandler.Callback)
+	r.Get("/v1/auth/ext/done", authHandler.ExtDone)
 
 	// Protected routes — expanded in Step 3+
 	r.Group(func(r chi.Router) {
