@@ -58,6 +58,54 @@ async function injectMemoriesIntoInput(getInputEl, query) {
   inputEl.addEventListener('focus', inject, { once: true });
 }
 
+// watch user input before injecting response
+function watchInputAndInject(getInputEl, getSendButton = null) {
+  waitForElement(getInputEl, 8000).then((inputEl) => {
+    if (!inputEl) return;
+    let inject = false;
+    inputEl.addEventListener(
+      'keydown',
+      async (e) => {
+        if (e.key === 'Enter' && !e.shiftKey && !e.inject) {
+          inject = true;
+          const userMessage = getInputValue(inputEl);
+          if (!userMessage.trim() || userMessage.includes('[MemoAI Context]'))
+            return;
+          e.preventDefault();
+          e.stopImmediatePropagation();
+
+          const result = await sendToBackground('FETCH_MEMORIES', {
+            query: userMessage.trim(),
+            limit: 3,
+          }).catch(() => null);
+          if (!result?.memories?.length) return;
+
+          const contextBlock = buildContextBlock(result.memories);
+          setInputValue(inputEl, contextBlock + userMessage);
+          showToast(
+            `✓ ${result.memories.length} memor${result.memories.length === 1 ? 'y' : 'ies'} loaded`,
+            'success',
+          );
+          // const sendBtn = getSendButton?.();
+          // if (sendBtn) {
+          //   sendBtn.click();
+          // } else {
+          //   inputEl.dispatchEvent(
+          //     new KeyboardEvent('keydown', {
+          //       key: 'Enter',
+          //       code: 'Enter',
+          //       bubbles: true,
+          //       cancelable: true,
+          //     }),
+          //   );
+          // }
+        }
+      },
+      true,
+    );
+  });
+}
+
 function buildContextBlock(memories) {
   const lines = memories.map((m) => `- ${m.content}`).join('\n');
   return `[MemoAI Context — background info about me, use naturally]\n${lines}\n[End Context]\n\n`;

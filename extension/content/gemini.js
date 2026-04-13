@@ -87,7 +87,7 @@ function init() {
   injectSubmitButton(submitConversation);
   loadMemories();
   const query = document.title || 'general context';
-  injectMemoriesIntoInput(getGeminiInput, query);
+  watchInputAndInject(getGeminiInput);
 }
 
 let lastUrl = location.href;

@@ -89,7 +89,7 @@ function init() {
   loadMemories();
 
   const query = document.title || 'general context';
-  injectMemoriesIntoInput(getClaudeInput, query);
+  watchInputAndInject(getClaudeInput);
 }
 
 // Claude.ai is a SPA — re-init when the URL changes (new conversation)

@@ -73,7 +73,7 @@ function init() {
   injectSubmitButton(submitConversation);
   loadMemories();
   const query = document.title || 'general context';
-  injectMemoriesIntoInput(getChatGPTInput, query);
+  watchInputAndInject(getChatGPTInput);
 }
 
 let lastUrl = location.href;
