@@ -104,18 +104,15 @@ const HubDiagram: FC = () => {
           key={m.label}
           x1={m.cx + 40} y1={modelY + 18}
           x2={hubCx} y2={hubCy - 26}
-          stroke={activeModel === i ? '#c97c1a' : '#e8ddd0'}
+          stroke={activeModel === i ? '#09090b' : '#e4e4e7'}
           strokeWidth={activeModel === i ? '1.5' : '1'}
           strokeDasharray="5 4"
           style={{ transition: 'stroke 0.4s ease' }}
         />
       ))}
 
-      {/* Outer glow ring */}
-      <circle cx={hubCx} cy={hubCy} r={38} fill="#c97c1a" opacity="0.08" />
-
       {/* Hub circle */}
-      <circle cx={hubCx} cy={hubCy} r={26} fill="#c97c1a" />
+      <circle cx={hubCx} cy={hubCy} r={26} fill="#09090b" />
       <text
         x={hubCx} y={hubCy - 3}
         textAnchor="middle"
@@ -134,7 +131,7 @@ const HubDiagram: FC = () => {
         fontSize="6"
         fontFamily="JetBrains Mono, monospace"
         letterSpacing="1"
-        opacity="0.75"
+        opacity="0.6"
       >
         memory
       </text>
@@ -146,15 +143,15 @@ const HubDiagram: FC = () => {
             x={m.cx} y={modelY - 4}
             width={80} height={32}
             rx="4"
-            fill={activeModel === i ? '#fdf6ec' : '#ffffff'}
-            stroke={activeModel === i ? '#d4b896' : '#e8ddd0'}
+            fill={activeModel === i ? '#f4f4f5' : '#ffffff'}
+            stroke={activeModel === i ? '#09090b' : '#e4e4e7'}
             strokeWidth="1"
             style={{ transition: 'all 0.3s ease' }}
           />
           <text
             x={m.cx + 40} y={modelY + 10}
             textAnchor="middle"
-            fill={activeModel === i ? '#c97c1a' : '#8a7a65'}
+            fill={activeModel === i ? '#09090b' : '#a1a1aa'}
             fontSize="10"
             fontFamily="Sora, system-ui, sans-serif"
             fontWeight="500"
@@ -165,7 +162,7 @@ const HubDiagram: FC = () => {
           <text
             x={m.cx + 40} y={modelY + 22}
             textAnchor="middle"
-            fill={activeModel === i ? '#c97c1a' : '#8a7a65'}
+            fill={activeModel === i ? '#09090b' : '#a1a1aa'}
             fontSize="8"
             fontFamily="Sora, system-ui, sans-serif"
             style={{ transition: 'fill 0.3s ease' }}

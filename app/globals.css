@@ -10,25 +10,24 @@
 
 /* ─── Scrollbar ─────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; }
-::-webkit-scrollbar-track { background: #f8f5f0; }
-::-webkit-scrollbar-thumb { background: #d4b896; border-radius: 2px; }
+::-webkit-scrollbar-track { background: #fafafa; }
+::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 2px; }
 
-::selection { background: rgba(201, 124, 26, 0.15); color: #1a1008; }
+::selection { background: rgba(9, 9, 11, 0.1); color: #09090b; }
 
-/* ─── Background grid (subtle warm) ────────────────────── */
+/* ─── Background grid (subtle) ─────────────────────────── */
 .grid-bg {
   background-image:
-    linear-gradient(rgba(180, 130, 60, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(180, 130, 60, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
   background-size: 72px 72px;
 }
 
-/* ─── Gradient text ─────────────────────────────────────── */
+/* ─── Gradient text (black) ─────────────────────────────── */
 .text-gradient {
-  background: linear-gradient(135deg, #c97c1a 0%, #e8a030 50%, #c97c1a 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  background: none;
+  -webkit-text-fill-color: #09090b;
+  color: #09090b;
 }
 
 /* ─── Shimmer hover ─────────────────────────────────────── */
