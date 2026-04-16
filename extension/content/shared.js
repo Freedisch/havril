@@ -1,5 +1,3 @@
-// content/shared.js — utilities available to all content scripts
-
 function sendToBackground(type, payload) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage({ type, payload }, (response) => {

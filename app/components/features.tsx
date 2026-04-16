@@ -1,67 +1,65 @@
 import { FC } from 'react';
 
-interface FeatureCard {
+interface Card {
   icon: string;
   title: string;
   body: string;
 }
+
 export const Features: FC = () => {
-  const features: FeatureCard[] = [
+  const cards: Card[] = [
     {
       icon: '◈',
-      title: 'Model-agnostic by design',
-      body: "Claude, ChatGPT, Gemini, Mistral — connect any model. Your memory isn't locked to any platform.",
+      title: 'Model-agnostic',
+      body: "Claude, ChatGPT, Gemini, Mistral — your memory isn't locked to any platform.",
     },
     {
       icon: '◎',
-      title: 'Zero conversation storage',
-      body: 'Raw transcripts are processed and discarded. Only distilled facts persist. Privacy is architectural.',
+      title: 'Zero transcript storage',
+      body: 'Raw conversations are processed in memory and discarded. Only distilled facts persist.',
     },
     {
       icon: '◉',
       title: 'Semantic retrieval',
-      body: 'Memories are retrieved by meaning, not keywords. Ask about your Go project and get back everything relevant.',
+      body: 'Memories are fetched by meaning, not keywords. Ask about your Go project and get everything relevant.',
     },
     {
       icon: '◇',
       title: 'Contradiction resolution',
-      body: 'Moved cities? Changed jobs? Havril detects conflicts and updates your memory profile automatically.',
+      body: 'Moved cities? Changed jobs? Havril detects conflicts and updates your profile automatically.',
     },
     {
       icon: '✦',
       title: 'Native MCP for Claude',
-      body: 'Claude calls Havril as a tool mid-conversation. Real tool use — no prompt injection hacks.',
+      body: 'Claude calls Havril as a real tool mid-conversation. No prompt injection. No hacks.',
     },
     {
       icon: '⊕',
-      title: 'Importance decay',
+      title: 'Importance scoring',
       body: 'Memories that matter stay. Stale context fades. The engine keeps your profile accurate over time.',
     },
   ];
 
   return (
-    <section id="features" className="py-32 px-8 md:px-12 max-w-6xl mx-auto">
-      <div className="flex items-center gap-4 mb-16">
-        <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-amber">
-          Features
-        </span>
-        <div className="flex-1 h-px bg-edge" />
-      </div>
+    <section id="features" className="py-28 px-6 md:px-12 max-w-5xl mx-auto">
+      <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-fog mb-12">
+        What makes it different
+      </p>
 
       <div className="grid md:grid-cols-3 gap-px bg-edge">
-        {features.map((f) => (
+        {cards.map((c) => (
           <div
-            key={f.title}
-            className="bg-ink p-8 hover:bg-ink2 transition-colors duration-300 group shimmer"
+            key={c.title}
+            className="bg-ink p-8 hover:bg-white transition-colors duration-300 group"
           >
-            <span className="text-amber text-2xl block mb-5 group-hover:scale-110 transition-transform duration-200 inline-block">
-              {f.icon}
+            <span className="text-amber text-xl block mb-5 group-hover:scale-110 transition-transform duration-200 inline-block">
+              {c.icon}
             </span>
-            <h3 className="font-display text-xl font-light text-cream mb-3 leading-tight">
-              {f.title}
+            <h3 className="font-display text-xl font-normal text-cream mb-3 leading-snug">
+              {c.title}
             </h3>
-            <p className="text-sm text-mist leading-relaxed font-light">
-              {f.body}
+            <p className="text-[13px] text-mist leading-relaxed font-body">
+              {c.body}
             </p>
           </div>
         ))}

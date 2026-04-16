@@ -98,4 +98,5 @@ new MutationObserver(() => {
   }
 }).observe(document.body, { childList: true, subtree: true });
 
-setTimeout(init, 2000); // Gemini loads slightly slower
+setTimeout(init, 2000);
+// Gemini loads slightly slower

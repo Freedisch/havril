@@ -1,3 +1,4 @@
+'use client';
 import { FC, useState } from 'react';
 import { useScrolled } from '../utils/customState';
 
@@ -5,25 +6,19 @@ export const Nav: FC = () => {
   const scrolled = useScrolled();
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
-  const links: string[] = ['How it works', 'Features', 'Integrations'];
+  const links = ['How it works', 'Features', 'Integrations'];
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 md:px-12 py-5 transition-all duration-500 ${
-        scrolled ? 'bg-ink/90 backdrop-blur-xl border-b border-edge' : ''
+      className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-5 transition-all duration-300 ${
+        scrolled ? 'bg-ink/95 backdrop-blur-xl border-b border-edge' : ''
       }`}
     >
       <a href="#">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/havril.png"
-          alt="Havril"
-          height={24}
-          style={{ height: '50px', width: 'auto' }}
-        />
+        <img src="/havril.png" alt="Havril" style={{ height: '44px', width: 'auto' }} />
       </a>
 
-      {/* Desktop links */}
       <div className="hidden md:flex items-center gap-10 text-[11px] tracking-widest uppercase font-body font-light text-mist">
         {links.map((l) => (
           <a
@@ -36,10 +31,10 @@ export const Nav: FC = () => {
         ))}
       </div>
 
-      <div className="hidden md:flex items-center gap-5">
+      <div className="hidden md:flex items-center gap-4">
         <a
           href="#get-access"
-          className="text-[11px] tracking-widest uppercase bg-amber text-ink px-5 py-2.5 font-medium hover:bg-amber/90 transition-all duration-200 hover:-translate-y-px"
+          className="text-[11px] tracking-widest uppercase bg-amber text-white px-5 py-2.5 font-medium hover:bg-amber/90 transition-colors rounded-sm"
         >
           Get Early Access
         </a>
@@ -56,15 +51,12 @@ export const Nav: FC = () => {
           menuOpen ? 'opacity-0' : '',
           menuOpen ? '-rotate-45 -translate-y-[7px]' : '',
         ].map((cls, i) => (
-          <span
-            key={i}
-            className={`block w-5 h-px bg-cream transition-all duration-300 ${cls}`}
-          />
+          <span key={i} className={`block w-5 h-px bg-cream transition-all duration-300 ${cls}`} />
         ))}
       </button>
 
       {menuOpen && (
-        <div className="absolute top-full left-0 right-0 bg-ink2 border-b border-edge p-8 flex flex-col gap-6 md:hidden">
+        <div className="absolute top-full left-0 right-0 bg-ink border-b border-edge p-8 flex flex-col gap-6 md:hidden">
           {links.map((l) => (
             <a
               key={l}
@@ -75,10 +67,7 @@ export const Nav: FC = () => {
               {l}
             </a>
           ))}
-          <a
-            href="#"
-            className="text-[11px] tracking-widest uppercase bg-amber text-ink px-5 py-3 font-medium text-center"
-          >
+          <a href="#get-access" className="text-[11px] uppercase bg-amber text-white px-5 py-3 font-medium text-center rounded-sm">
             Get Early Access
           </a>
         </div>
