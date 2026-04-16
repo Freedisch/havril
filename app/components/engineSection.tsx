@@ -36,7 +36,7 @@ export const EngineSection: FC = () => {
   ];
 
   return (
-    <section className="py-28 px-6 md:px-12 bg-white relative overflow-hidden">
+    <section className="py-28 px-6 md:px-12 bg-ink2 relative overflow-hidden border-t border-edge">
       <div className="max-w-5xl mx-auto">
         <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-fog mb-4">
           The Memory Engine
@@ -61,7 +61,7 @@ export const EngineSection: FC = () => {
           {pipeline.map((p, i) => (
             <div
               key={p.step}
-              className={`p-7 group hover:bg-ink transition-colors duration-300 ${
+              className={`p-7 group hover:bg-ink3 transition-colors duration-300 ${
                 i < pipeline.length - 1 ? 'border-b md:border-b-0 md:border-r border-edge' : ''
               }`}
             >

@@ -31,7 +31,7 @@ export const CodePreview: FC = () => {
   ];
 
   return (
-    <section className="py-28 px-6 md:px-12 bg-white relative overflow-hidden">
+    <section className="py-28 px-6 md:px-12 bg-ink2 relative overflow-hidden border-t border-edge">
       <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-14 items-center">
         {/* Left */}
         <div>
@@ -61,7 +61,7 @@ export const CodePreview: FC = () => {
 
         {/* Terminal */}
         <div className="border border-edge bg-ink relative overflow-hidden rounded-sm">
-          <div className="flex items-center gap-2 px-5 py-3 border-b border-edge bg-white/50">
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-edge bg-ink3">
             {['bg-red-200', 'bg-yellow-200', 'bg-green-200'].map((c, i) => (
               <div key={i} className={`w-2.5 h-2.5 rounded-full ${c}`} />
             ))}

@@ -50,7 +50,7 @@ export const Features: FC = () => {
         {cards.map((c) => (
           <div
             key={c.title}
-            className="bg-ink p-8 hover:bg-white transition-colors duration-300 group"
+            className="bg-ink p-8 hover:bg-ink3 transition-colors duration-300 group"
           >
             <span className="text-amber text-xl block mb-5 group-hover:scale-110 transition-transform duration-200 inline-block">
               {c.icon}

@@ -39,7 +39,7 @@ export const HowItWorks: FC = () => {
         {steps.map((s, i) => (
           <div
             key={s.n}
-            className={`p-9 group hover:bg-white transition-colors duration-300 ${
+            className={`p-9 group hover:bg-ink3 transition-colors duration-200 ${
               i < steps.length - 1 ? 'border-b md:border-b-0 md:border-r border-edge' : ''
             }`}
           >

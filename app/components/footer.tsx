@@ -4,7 +4,7 @@ export const Footer: FC = () => {
   const links = ['GitHub', 'Docs', 'API Reference', 'Status'];
 
   return (
-    <footer className="border-t border-edge px-6 md:px-12 py-10 bg-white">
+    <footer className="border-t border-edge px-6 md:px-12 py-10 bg-ink">
       <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <div className="font-display text-lg font-medium tracking-wide text-cream mb-1">

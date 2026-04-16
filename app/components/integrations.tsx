@@ -36,7 +36,7 @@ export const Integrations: FC = () => {
         {integrations.map((it) => (
           <div
             key={it.name}
-            className={`bg-ink p-7 flex flex-col gap-4 hover:bg-white transition-colors duration-300 ${
+            className={`bg-ink p-7 flex flex-col gap-4 hover:bg-ink3 transition-colors duration-300 ${
               !it.ready ? 'opacity-60' : ''
             }`}
           >

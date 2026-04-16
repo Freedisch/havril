@@ -14,17 +14,17 @@ const config: Config = {
         body:    ["var(--font-body)", "system-ui", "sans-serif"],
       },
       colors: {
-        // --- Page theme (light / blue) ---
-        ink:   "#f0f4fe",   // page background — light lavender
+        // --- Page theme (light / warm gold) ---
+        ink:   "#f8f5f0",   // page background — warm off-white
         ink2:  "#ffffff",   // surface / card
-        ink3:  "#f8faff",   // subtle surface
-        cream: "#0f172a",   // primary text
-        mist:  "#334155",   // secondary text
-        fog:   "#64748b",   // muted / tertiary text
-        amber: "#2563eb",   // primary accent (blue, keeps old "amber" slot)
-        edge:  "#e2e8f0",   // light border
-        edge2: "#c7d2fe",   // accent border
-        edge3: "#93c5fd",   // bright accent border
+        ink3:  "#f3ede4",   // subtle surface / hover
+        cream: "#1a1008",   // primary text — near-black warm
+        mist:  "#4a3f2f",   // secondary text
+        fog:   "#8a7a65",   // muted / tertiary text
+        amber: "#c97c1a",   // primary accent — warm amber
+        edge:  "#e8ddd0",   // border
+        edge2: "#d4b896",   // accent border
+        edge3: "#c4a070",   // bright border
         // --- Shadcn tokens ---
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",

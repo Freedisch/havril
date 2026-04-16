@@ -10,22 +10,22 @@
 
 /* ─── Scrollbar ─────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; }
-::-webkit-scrollbar-track { background: #f0f4fe; }
-::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 2px; }
+::-webkit-scrollbar-track { background: #f8f5f0; }
+::-webkit-scrollbar-thumb { background: #d4b896; border-radius: 2px; }
 
-::selection { background: rgba(37, 99, 235, 0.14); color: #0f172a; }
+::selection { background: rgba(201, 124, 26, 0.15); color: #1a1008; }
 
-/* ─── Background grid (subtle blue) ────────────────────── */
+/* ─── Background grid (subtle warm) ────────────────────── */
 .grid-bg {
   background-image:
-    linear-gradient(rgba(37,99,235,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37,99,235,0.04) 1px, transparent 1px);
+    linear-gradient(rgba(180, 130, 60, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(180, 130, 60, 0.06) 1px, transparent 1px);
   background-size: 72px 72px;
 }
 
 /* ─── Gradient text ─────────────────────────────────────── */
 .text-gradient {
-  background: linear-gradient(135deg, #2563eb 0%, #60a5fa 50%, #2563eb 100%);
+  background: linear-gradient(135deg, #c97c1a 0%, #e8a030 50%, #c97c1a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

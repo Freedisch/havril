@@ -16,7 +16,7 @@ export const Hero: FC = () => {
       <div className="absolute inset-0 grid-bg" />
 
       {/* Badge */}
-      <div className="relative z-10 flex items-center gap-2 border border-edge bg-white/70 px-4 py-1.5 mb-10 rounded-full animate-fade-up delay-0">
+      <div className="relative z-10 flex items-center gap-2 border border-edge bg-ink2/80 px-4 py-1.5 mb-10 rounded-full animate-fade-up delay-0">
         <span className="w-1.5 h-1.5 rounded-full bg-amber animate-blink" />
         <span className="font-mono text-[10px] tracking-widest uppercase text-fog">
           Now in development
@@ -24,7 +24,10 @@ export const Hero: FC = () => {
       </div>
 
       {/* Headline */}
-      <h1 className="relative z-10 font-display text-center font-normal leading-[1.05] text-cream animate-fade-up delay-100 max-w-3xl" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+      <h1
+        className="relative z-10 font-display text-center font-normal leading-[1.05] text-cream animate-fade-up delay-100 max-w-3xl"
+        style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+      >
         One memory.
         <br />
         <span className="text-amber">Every model.</span>
@@ -39,16 +42,22 @@ export const Hero: FC = () => {
 
       {/* CTAs */}
       <div className="relative z-10 mt-9 flex flex-col sm:flex-row items-center gap-4 animate-fade-up delay-300">
-        <a href="#get-access" className="bg-amber text-white px-7 py-3 text-[12px] tracking-widest uppercase font-medium rounded-sm hover:bg-amber/90 transition-colors">
+        <a
+          href="#get-access"
+          className="bg-amber text-white px-7 py-3 text-[12px] tracking-widest uppercase font-medium rounded-sm hover:bg-amber/90 transition-colors"
+        >
           Get early access
         </a>
-        <a href="#how-it-works" className="text-[12px] tracking-widest uppercase text-fog hover:text-mist transition-colors">
+        <a
+          href="#how-it-works"
+          className="text-[12px] tracking-widest uppercase text-fog hover:text-mist transition-colors"
+        >
           See how it works
         </a>
       </div>
 
       {/* Live memory pill */}
-      <div className="relative z-10 mt-10 border border-edge bg-white/60 backdrop-blur-sm px-5 py-2.5 flex items-center gap-3 max-w-full animate-fade-up delay-400 rounded-sm">
+      <div className="relative z-10 mt-10 border border-edge bg-ink2/60 px-5 py-2.5 flex items-center gap-3 max-w-full animate-fade-up delay-400 rounded-sm">
         <span className="font-mono text-[9px] tracking-widest uppercase text-fog shrink-0">
           Live memory
         </span>
@@ -72,10 +81,10 @@ const HubDiagram: FC = () => {
   const [activeModel, setActiveModel] = useState(0);
 
   const models = [
-    { label: 'Claude',   icon: '✦', cx: 60  },
-    { label: 'ChatGPT',  icon: '◎', cx: 180 },
-    { label: 'Gemini',   icon: '◈', cx: 300 },
-    { label: 'Mistral',  icon: '◇', cx: 420 },
+    { label: 'Claude',  icon: '✦', cx: 60  },
+    { label: 'ChatGPT', icon: '◎', cx: 180 },
+    { label: 'Gemini',  icon: '◈', cx: 300 },
+    { label: 'Mistral', icon: '◇', cx: 420 },
   ];
 
   const hubCx = 240;
@@ -83,7 +92,7 @@ const HubDiagram: FC = () => {
   const modelY = 28;
 
   useEffect(() => {
-    const t = setInterval(() => setActiveModel(i => (i + 1) % models.length), 1400);
+    const t = setInterval(() => setActiveModel((i) => (i + 1) % models.length), 1400);
     return () => clearInterval(t);
   }, [models.length]);
 
@@ -95,7 +104,7 @@ const HubDiagram: FC = () => {
           key={m.label}
           x1={m.cx + 40} y1={modelY + 18}
           x2={hubCx} y2={hubCy - 26}
-          stroke={activeModel === i ? '#93c5fd' : '#e2e8f0'}
+          stroke={activeModel === i ? '#c97c1a' : '#e8ddd0'}
           strokeWidth={activeModel === i ? '1.5' : '1'}
           strokeDasharray="5 4"
           style={{ transition: 'stroke 0.4s ease' }}
@@ -103,10 +112,10 @@ const HubDiagram: FC = () => {
       ))}
 
       {/* Outer glow ring */}
-      <circle cx={hubCx} cy={hubCy} r={38} fill="#dbeafe" opacity="0.5" />
+      <circle cx={hubCx} cy={hubCy} r={38} fill="#c97c1a" opacity="0.08" />
 
       {/* Hub circle */}
-      <circle cx={hubCx} cy={hubCy} r={26} fill="#2563eb" />
+      <circle cx={hubCx} cy={hubCy} r={26} fill="#c97c1a" />
       <text
         x={hubCx} y={hubCy - 3}
         textAnchor="middle"
@@ -114,16 +123,18 @@ const HubDiagram: FC = () => {
         fontSize="7"
         fontFamily="JetBrains Mono, monospace"
         letterSpacing="1.5"
+        fontWeight="600"
       >
         HAVRIL
       </text>
       <text
         x={hubCx} y={hubCy + 8}
         textAnchor="middle"
-        fill="#bfdbfe"
+        fill="white"
         fontSize="6"
         fontFamily="JetBrains Mono, monospace"
         letterSpacing="1"
+        opacity="0.75"
       >
         memory
       </text>
@@ -135,15 +146,15 @@ const HubDiagram: FC = () => {
             x={m.cx} y={modelY - 4}
             width={80} height={32}
             rx="4"
-            fill={activeModel === i ? '#eff6ff' : 'white'}
-            stroke={activeModel === i ? '#bfdbfe' : '#e2e8f0'}
+            fill={activeModel === i ? '#fdf6ec' : '#ffffff'}
+            stroke={activeModel === i ? '#d4b896' : '#e8ddd0'}
             strokeWidth="1"
             style={{ transition: 'all 0.3s ease' }}
           />
           <text
             x={m.cx + 40} y={modelY + 10}
             textAnchor="middle"
-            fill={activeModel === i ? '#2563eb' : '#64748b'}
+            fill={activeModel === i ? '#c97c1a' : '#8a7a65'}
             fontSize="10"
             fontFamily="Sora, system-ui, sans-serif"
             fontWeight="500"
@@ -154,7 +165,7 @@ const HubDiagram: FC = () => {
           <text
             x={m.cx + 40} y={modelY + 22}
             textAnchor="middle"
-            fill={activeModel === i ? '#2563eb' : '#94a3b8'}
+            fill={activeModel === i ? '#c97c1a' : '#8a7a65'}
             fontSize="8"
             fontFamily="Sora, system-ui, sans-serif"
             style={{ transition: 'fill 0.3s ease' }}

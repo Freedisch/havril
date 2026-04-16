@@ -35,7 +35,7 @@ export const CTA: FC = () => {
       <div className="absolute top-0 left-0 right-0 h-px bg-edge" />
 
       <div className="relative max-w-xl mx-auto text-center">
-        <div className="inline-flex items-center gap-2 border border-edge bg-white/60 px-4 py-1.5 mb-10 rounded-full">
+        <div className="inline-flex items-center gap-2 border border-edge bg-ink2/80 px-4 py-1.5 mb-10 rounded-full">
           <span className="w-1.5 h-1.5 rounded-full bg-amber animate-blink" />
           <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-fog">
             Early access open
@@ -66,7 +66,7 @@ export const CTA: FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
-              className="flex-1 bg-white border border-edge text-cream placeholder:text-fog px-4 py-3 text-[13px] font-body focus:outline-none focus:border-amber/40 transition-colors rounded-sm"
+              className="flex-1 bg-ink2 border border-edge text-cream placeholder:text-fog px-4 py-3 text-[13px] font-body focus:outline-none focus:border-amber/40 transition-colors rounded-sm"
               required
             />
             <button
@@ -77,7 +77,7 @@ export const CTA: FC = () => {
             </button>
           </form>
         ) : (
-          <div className="flex items-center justify-center gap-3 border border-edge bg-white/60 px-8 py-4 max-w-sm mx-auto animate-fade-in rounded-sm">
+          <div className="flex items-center justify-center gap-3 border border-edge bg-ink2/80 px-8 py-4 max-w-sm mx-auto animate-fade-in rounded-sm">
             <span className="text-amber">✦</span>
             <span className="font-mono text-[12px] text-mist">
               You&apos;re on the list. We&apos;ll be in touch.

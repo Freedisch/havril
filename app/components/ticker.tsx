@@ -21,7 +21,7 @@ export const Ticker: FC = () => {
   ];
 
   return (
-    <div className="border-y border-edge overflow-hidden py-3 bg-white">
+    <div className="border-y border-edge overflow-hidden py-3 bg-ink2/60">
       <div className="ticker-track">
         {items.map((item, i) => (
           <div key={i} className="flex items-center gap-5 px-6 shrink-0">
