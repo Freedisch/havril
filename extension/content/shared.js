@@ -1,114 +1,98 @@
+// content/shared.js — loaded before every platform script
+// Every function here is automatically available in claude.js, chatgpt.js, gemini.js
+
+// ── Background communication ──────────────────────────────────────────────────
+
 function sendToBackground(type, payload) {
   return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({ type, payload }, (response) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
-        return;
-      }
-      if (!response.ok) {
-        reject(new Error(response.error));
-        return;
-      }
-      resolve(response.data);
-    });
+    try {
+      chrome.runtime.sendMessage({ type, payload }, (response) => {
+        if (chrome.runtime.lastError) {
+          const msg = chrome.runtime.lastError.message || '';
+          if (
+            msg.includes('Extension context invalidated') ||
+            msg.includes('receiving end does not exist')
+          ) {
+            reject(
+              new Error('Extension was reloaded — please refresh this page'),
+            );
+            return;
+          }
+          reject(new Error(msg));
+          return;
+        }
+        if (!response.ok) {
+          reject(new Error(response.error));
+          return;
+        }
+        resolve(response.data);
+      });
+    } catch (err) {
+      reject(new Error('Extension was reloaded — please refresh this page'));
+    }
   });
 }
 
-// Fetch memories and inject them into the input box the first time the
-// user focuses it. The AI receives the context block as part of the message.
-// getInputEl — function that returns the input DOM element (or null)
-// query      — text to search memories with (page title or recent message)
-async function injectMemoriesIntoInput(getInputEl, query) {
-  if (!query) return;
+// ── Memory panel ──────────────────────────────────────────────────────────────
 
-  let memories;
-  try {
-    const result = await sendToBackground('FETCH_MEMORIES', {
-      query,
-      limit: 5,
-    });
-    memories = result?.memories;
-  } catch (err) {
-    console.debug('[MemoAI] fetch skipped:', err.message);
-    return;
-  }
+// Shows a floating panel bottom-right listing the loaded memories.
+function showMemoriesPanel(memories) {
+  const existing = document.getElementById('memoai-memories-panel');
+  if (existing) existing.remove();
 
   if (!memories || memories.length === 0) return;
 
-  const contextBlock = buildContextBlock(memories);
-  const inputEl = await waitForElement(getInputEl, 8000);
-  if (!inputEl) return;
+  const panel = document.createElement('div');
+  panel.id = 'memoai-memories-panel';
 
-  // Only inject once per page load
-  if (inputEl.dataset.memoaiInjected) return;
-  inputEl.dataset.memoaiInjected = 'true';
+  panel.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">
+        MemoAI — ${memories.length} memor${memories.length === 1 ? 'y' : 'ies'} loaded
+      </span>
+      <button id="memoai-close-panel" style="background:none;border:none;color:#71717a;cursor:pointer;font-size:16px;padding:0;line-height:1;">×</button>
+    </div>
+    <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;">
+      ${memories
+        .map(
+          (m) => `
+        <li style="font-size:12px;color:#d4d4d8;padding:6px 8px;background:#27272a;border-radius:4px;border-left:2px solid #3f3f46;">
+          ${escapeHtml(m.content)}
+        </li>
+      `,
+        )
+        .join('')}
+    </ul>
+  `;
 
-  let injected = false;
-  const inject = () => {
-    if (injected) return;
-    injected = true;
-    const current = getInputValue(inputEl);
-    if (current.includes('[MemoAI Context]')) return;
-    setInputValue(inputEl, contextBlock + current);
-    showToast('✓ Memory context loaded', 'success');
-  };
-
-  inputEl.addEventListener('focus', inject, { once: true });
-}
-
-// watch user input before injecting response
-function watchInputAndInject(getInputEl, getSendButton = null) {
-  waitForElement(getInputEl, 8000).then((inputEl) => {
-    if (!inputEl) return;
-    let inject = false;
-    inputEl.addEventListener(
-      'keydown',
-      async (e) => {
-        if (e.key === 'Enter' && !e.shiftKey && !e.inject) {
-          inject = true;
-          const userMessage = getInputValue(inputEl);
-          if (!userMessage.trim() || userMessage.includes('[MemoAI Context]'))
-            return;
-          e.preventDefault();
-          e.stopImmediatePropagation();
-
-          const result = await sendToBackground('FETCH_MEMORIES', {
-            query: userMessage.trim(),
-            limit: 3,
-          }).catch(() => null);
-          if (!result?.memories?.length) return;
-
-          const contextBlock = buildContextBlock(result.memories);
-          setInputValue(inputEl, contextBlock + userMessage);
-          showToast(
-            `✓ ${result.memories.length} memor${result.memories.length === 1 ? 'y' : 'ies'} loaded`,
-            'success',
-          );
-          // const sendBtn = getSendButton?.();
-          // if (sendBtn) {
-          //   sendBtn.click();
-          // } else {
-          //   inputEl.dispatchEvent(
-          //     new KeyboardEvent('keydown', {
-          //       key: 'Enter',
-          //       code: 'Enter',
-          //       bubbles: true,
-          //       cancelable: true,
-          //     }),
-          //   );
-          // }
-        }
-      },
-      true,
-    );
+  Object.assign(panel.style, {
+    position: 'fixed',
+    bottom: '80px',
+    right: '24px',
+    zIndex: '999998',
+    width: '300px',
+    maxHeight: '320px',
+    overflowY: 'auto',
+    background: '#18181b',
+    border: '1px solid #3f3f46',
+    borderRadius: '10px',
+    padding: '14px',
+    fontFamily: 'system-ui, sans-serif',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
   });
+
+  document.body.appendChild(panel);
+
+  document
+    .getElementById('memoai-close-panel')
+    .addEventListener('click', () => {
+      panel.remove();
+    });
 }
 
-function buildContextBlock(memories) {
-  const lines = memories.map((m) => `- ${m.content}`).join('\n');
-  return `[MemoAI Context — background info about me, use naturally]\n${lines}\n[End Context]\n\n`;
-}
+// ── Input injection ───────────────────────────────────────────────────────────
 
+// Waits for the input element to appear in the DOM.
 function waitForElement(getEl, timeoutMs) {
   return new Promise((resolve) => {
     const el = getEl();
@@ -132,12 +116,15 @@ function waitForElement(getEl, timeoutMs) {
   });
 }
 
+// Gets the current text value of an input or contenteditable element.
 function getInputValue(el) {
   return el.tagName === 'TEXTAREA' || el.tagName === 'INPUT'
     ? el.value
     : el.innerText || '';
 }
 
+// Sets the value of an input or contenteditable element in a way that
+// triggers React/Angular change detection.
 function setInputValue(el, value) {
   if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
     const setter = Object.getOwnPropertyDescriptor(
@@ -149,11 +136,68 @@ function setInputValue(el, value) {
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
   } else {
-    // contenteditable
+    // contenteditable div (Claude, Gemini)
     el.innerText = value;
     el.dispatchEvent(new InputEvent('input', { bubbles: true }));
   }
 }
+
+function buildContextBlock(memories) {
+  const lines = memories.map((m) => `- ${m.content}`).join('\n');
+  return `[MemoAI Context — background info about me, use naturally]\n${lines}\n[End Context]\n\n`;
+}
+
+// Intercepts Enter key, fetches memories using what the user typed as the
+// query, prepends the context block, then sends the message.
+// getSendButton is optional — falls back to re-dispatching Enter.
+function watchInputAndInject(getInputEl, getSendButton = null) {
+  waitForElement(getInputEl, 8000).then((inputEl) => {
+    if (!inputEl) return;
+
+    inputEl.addEventListener(
+      'keydown',
+      async (e) => {
+        if (e.key !== 'Enter' || e.shiftKey) return;
+
+        const userMessage = getInputValue(inputEl).trim();
+        if (!userMessage || userMessage.includes('[MemoAI Context]')) return;
+
+        // Block the platform from sending while we fetch
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        const result = await sendToBackground('FETCH_MEMORIES', {
+          query: userMessage,
+          limit: 5,
+        }).catch(() => null);
+
+        if (result?.memories?.length) {
+          const contextBlock = buildContextBlock(result.memories);
+          setInputValue(inputEl, contextBlock + userMessage);
+          showToast(`✓ ${result.memories.length} memories loaded`, 'success');
+        }
+
+        // Now send the message
+        const sendBtn = getSendButton?.();
+        if (sendBtn) {
+          sendBtn.click();
+        } else {
+          inputEl.dispatchEvent(
+            new KeyboardEvent('keydown', {
+              key: 'Enter',
+              code: 'Enter',
+              bubbles: true,
+              cancelable: true,
+            }),
+          );
+        }
+      },
+      true,
+    ); // capture phase — runs before the platform's own listeners
+  });
+}
+
+// ── Submit button ─────────────────────────────────────────────────────────────
 
 function injectSubmitButton(onClick) {
   if (document.getElementById('memoai-submit-btn')) return;
@@ -232,6 +276,8 @@ function resetButton(btn) {
   btn.style.borderColor = '#3f3f46';
 }
 
+// ── Toast notification ────────────────────────────────────────────────────────
+
 function showToast(message, type = 'info') {
   const existing = document.getElementById('memoai-toast');
   if (existing) existing.remove();
@@ -239,6 +285,7 @@ function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.id = 'memoai-toast';
   toast.textContent = message;
+
   const bg =
     type === 'error' ? '#7f1d1d' : type === 'success' ? '#14532d' : '#18181b';
 
@@ -270,6 +317,8 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
 
 function escapeHtml(str) {
   return str

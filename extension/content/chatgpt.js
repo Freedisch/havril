@@ -72,8 +72,21 @@ async function submitConversation() {
 function init() {
   injectSubmitButton(submitConversation);
   loadMemories();
-  const query = document.title || 'general context';
-  watchInputAndInject(getChatGPTInput);
+  window.addEventListener('memoai-fetch-memories', async (e) => {
+    const { query, requestId } = e.detail;
+    const result = await sendToBackground('FETCH_MEMORIES', {
+      query,
+      limit: 5,
+    }).catch(() => null);
+
+    window.dispatchEvent(
+      new CustomEvent(`memoai-response-${requestId}`, {
+        detail: { memories: result?.memories || [] },
+      }),
+    );
+  });
+  // const query = document.title || 'general context';
+  // watchInputAndInject(getChatGPTInput);
 }
 
 let lastUrl = location.href;
