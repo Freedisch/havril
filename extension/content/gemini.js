@@ -85,8 +85,8 @@ async function submitConversation() {
 
 function init() {
   injectSubmitButton(submitConversation);
+  injectMemoryPickerButton(getGeminiInput);
   loadMemories();
-  const query = document.title || 'general context';
   watchInputAndInject(getGeminiInput);
 }
 

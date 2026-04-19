@@ -197,6 +197,231 @@ function watchInputAndInject(getInputEl, getSendButton = null) {
   });
 }
 
+// ── Memory Picker ─────────────────────────────────────────────────────────────
+
+// Creates a floating "Memories" button (bottom-left) that opens a search panel.
+// Clicking a memory result pastes it into the platform's chat input.
+function injectMemoryPickerButton(getInputEl) {
+  document.getElementById('memoai-picker-btn')?.remove();
+  document.getElementById('memoai-picker-panel')?.remove();
+
+  let searchTimeout = null;
+  let currentMemories = [];
+
+  // ── Panel ──────────────────────────────────────────────────────────────────
+  const panel = document.createElement('div');
+  panel.id = 'memoai-picker-panel';
+  Object.assign(panel.style, {
+    position: 'fixed',
+    bottom: '72px',
+    left: '24px',
+    zIndex: '999999',
+    width: '320px',
+    maxHeight: '440px',
+    background: '#18181b',
+    border: '1px solid #3f3f46',
+    borderRadius: '12px',
+    fontFamily: 'system-ui, sans-serif',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+    display: 'none',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  });
+
+  panel.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #3f3f46;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:7px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">Your Memories</span>
+      </div>
+      <button id="memoai-picker-close" style="background:none;border:none;color:#71717a;cursor:pointer;font-size:18px;line-height:1;padding:2px 6px;border-radius:4px;" title="Close">×</button>
+    </div>
+    <div style="padding:10px 12px;border-bottom:1px solid #27272a;flex-shrink:0;">
+      <input id="memoai-picker-search" type="text" placeholder="Search memories…" autocomplete="off" style="width:100%;box-sizing:border-box;background:#09090b;border:1px solid #3f3f46;border-radius:6px;color:#f4f4f5;font-size:13px;padding:7px 10px;outline:none;font-family:system-ui,sans-serif;">
+    </div>
+    <div id="memoai-picker-results" style="overflow-y:auto;flex:1;"></div>
+  `;
+
+  const resultsEl = panel.querySelector('#memoai-picker-results');
+  const searchInput = panel.querySelector('#memoai-picker-search');
+
+  // ── Floating button ────────────────────────────────────────────────────────
+  const btn = document.createElement('button');
+  btn.id = 'memoai-picker-btn';
+  btn.title = 'Search and paste memories';
+  btn.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <span>Memories</span>
+  `;
+  Object.assign(btn.style, {
+    position: 'fixed',
+    bottom: '24px',
+    left: '24px',
+    zIndex: '999999',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '10px 16px',
+    background: '#18181b',
+    color: '#f4f4f5',
+    border: '1px solid #3f3f46',
+    borderRadius: '8px',
+    fontSize: '13px',
+    fontFamily: 'system-ui, sans-serif',
+    fontWeight: '500',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+    transition: 'all 0.15s ease',
+  });
+
+  btn.addEventListener('mouseenter', () => {
+    btn.style.background = '#27272a';
+    btn.style.borderColor = '#71717a';
+  });
+  btn.addEventListener('mouseleave', () => {
+    btn.style.background = '#18181b';
+    btn.style.borderColor = '#3f3f46';
+  });
+
+  // ── Open / close ───────────────────────────────────────────────────────────
+  function openPanel() {
+    panel.style.display = 'flex';
+    searchInput.value = '';
+    searchInput.focus();
+    loadAllMemories();
+  }
+
+  function closePanel() {
+    panel.style.display = 'none';
+  }
+
+  btn.addEventListener('click', () => {
+    panel.style.display !== 'none' ? closePanel() : openPanel();
+  });
+
+  panel.querySelector('#memoai-picker-close').addEventListener('click', closePanel);
+
+  // ── Search input ───────────────────────────────────────────────────────────
+  searchInput.addEventListener('keydown', (e) => {
+    e.stopPropagation(); // don't let keypresses leak to the AI platform
+    if (e.key === 'Escape') closePanel();
+  });
+
+  searchInput.addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    const q = e.target.value.trim();
+    if (q.length === 0) {
+      loadAllMemories();
+    } else if (q.length >= 2) {
+      searchTimeout = setTimeout(() => searchMemories(q), 350);
+    }
+  });
+
+  // ── Data fetching ──────────────────────────────────────────────────────────
+  async function loadAllMemories() {
+    showPlaceholder('Loading…');
+    try {
+      const data = await sendToBackground('LIST_MEMORIES', {});
+      const memories = data?.memories || (Array.isArray(data) ? data : []);
+      renderResults(memories);
+    } catch (err) {
+      const msg = err.message?.includes('token not set')
+        ? 'Sign in via the MemoAI popup to access memories'
+        : 'Could not load memories';
+      showPlaceholder(msg);
+    }
+  }
+
+  async function searchMemories(query) {
+    try {
+      const data = await sendToBackground('FETCH_MEMORIES', { query, limit: 10 });
+      renderResults(data?.memories || []);
+    } catch {
+      // keep showing previous results on search error
+    }
+  }
+
+  // ── Rendering ──────────────────────────────────────────────────────────────
+  function showPlaceholder(text) {
+    resultsEl.innerHTML = `<div style="padding:24px 14px;text-align:center;color:#71717a;font-size:12px;">${escapeHtml(text)}</div>`;
+  }
+
+  const TYPE_COLORS = {
+    semantic: '#6366f1',
+    episodic: '#f59e0b',
+    procedural: '#10b981',
+    summary: '#3b82f6',
+  };
+
+  function renderResults(memories) {
+    currentMemories = memories;
+
+    if (memories.length === 0) {
+      showPlaceholder('No memories found');
+      return;
+    }
+
+    resultsEl.innerHTML = memories.map((m, i) => {
+      const color = TYPE_COLORS[m.type] || '#71717a';
+      const preview = (m.content || '').length > 110
+        ? m.content.slice(0, 110) + '…'
+        : m.content || '';
+      const pct = Math.round((m.importance || 0) * 100);
+      return `
+        <div class="memoai-mi" data-idx="${i}" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #27272a;transition:background 0.1s;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+            <span style="font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:${color};background:${color}22;padding:1px 6px;border-radius:3px;">${escapeHtml(m.type || 'memory')}</span>
+            <span style="font-size:10px;color:#52525b;margin-left:auto;">${pct}%</span>
+          </div>
+          <div style="font-size:12px;color:#d4d4d8;line-height:1.5;">${escapeHtml(preview)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Single delegated click listener (attached once)
+  resultsEl.addEventListener('click', (e) => {
+    const item = e.target.closest('.memoai-mi');
+    if (!item) return;
+    const idx = parseInt(item.dataset.idx, 10);
+    const memory = currentMemories[idx];
+    if (!memory) return;
+    pasteMemoryToInput(memory.content);
+    closePanel();
+  });
+
+  // Hover effect via delegation
+  resultsEl.addEventListener('mouseover', (e) => {
+    const item = e.target.closest('.memoai-mi');
+    if (item) item.style.background = '#27272a';
+  });
+  resultsEl.addEventListener('mouseout', (e) => {
+    const item = e.target.closest('.memoai-mi');
+    if (item) item.style.background = 'transparent';
+  });
+
+  // ── Paste to AI input ──────────────────────────────────────────────────────
+  function pasteMemoryToInput(content) {
+    const inputEl = getInputEl();
+    if (!inputEl) {
+      showToast('Chat input not found — try clicking the chat box first', 'error');
+      return;
+    }
+    const existing = getInputValue(inputEl).trim();
+    const newValue = existing ? `${existing}\n\n${content}` : content;
+    setInputValue(inputEl, newValue);
+    inputEl.focus();
+    showToast('Memory pasted ✓', 'success');
+  }
+
+  document.body.appendChild(panel);
+  document.body.appendChild(btn);
+}
+
 // ── Submit button ─────────────────────────────────────────────────────────────
 
 function injectSubmitButton(onClick) {

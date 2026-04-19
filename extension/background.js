@@ -103,6 +103,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         const { conversation, sourceModel } = message.payload;
         return submitConversation(conversation, sourceModel);
       }
+      case 'LIST_MEMORIES': {
+        return apiFetch('/v1/memory');
+      }
       case 'GET_CONFIG': {
         return getConfig();
       }

@@ -71,6 +71,7 @@ async function submitConversation() {
 
 function init() {
   injectSubmitButton(submitConversation);
+  injectMemoryPickerButton(getChatGPTInput);
   loadMemories();
   window.addEventListener('memoai-fetch-memories', async (e) => {
     const { query, requestId } = e.detail;

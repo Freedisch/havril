@@ -86,9 +86,9 @@ async function submitConversation() {
 
 function init() {
   injectSubmitButton(submitConversation);
+  injectMemoryPickerButton(getClaudeInput);
   loadMemories();
 
-  const query = document.title || 'general context';
   watchInputAndInject(getClaudeInput);
 }
 
