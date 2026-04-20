@@ -1,6 +1,24 @@
 const $ = (id) => document.getElementById(id);
 const DEFAULT_SERVER = 'http://localhost:8080';
 
+// ── Theme ─────────────────────────────────────────────────────────────────────
+
+function applyTheme(dark) {
+  document.body.dataset.theme = dark ? 'dark' : 'light';
+  $('icon-moon').style.display = dark ? 'none' : '';
+  $('icon-sun').style.display  = dark ? '' : 'none';
+}
+
+chrome.storage.sync.get(['havrilTheme'], (r) => {
+  applyTheme(r?.havrilTheme === 'dark');
+});
+
+$('btn-theme').addEventListener('click', () => {
+  const dark = document.body.dataset.theme !== 'dark';
+  applyTheme(dark);
+  chrome.storage.sync.set({ havrilTheme: dark ? 'dark' : 'light' });
+});
+
 function showView(name) {
   ['login', 'connecting', 'connected'].forEach((v) => {
     $(`view-${v}`).style.display = v === name ? 'flex' : 'none';
@@ -24,7 +42,7 @@ function applyUserInfo({ userName, userEmail, userAvatar }) {
 }
 
 chrome.storage.sync.get(
-  ['token', 'serverUrl', 'userName', 'userEmail', 'userAvatar'],
+  ['token', 'serverUrl', 'userName', 'userEmail', 'userAvatar', 'havrilTheme'],
   async (stored) => {
     if (stored.serverUrl) $('serverUrl').value = stored.serverUrl;
 

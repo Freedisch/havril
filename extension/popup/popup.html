@@ -319,6 +319,36 @@
       background: rgba(220,38,38,0.04);
     }
 
+    /* ── Dark theme ── */
+    [data-theme="dark"] {
+      --bg:       #09090b;
+      --surface:  #18181b;
+      --hover:    #27272a;
+      --border:   #27272a;
+      --border2:  #3f3f46;
+      --text:     #f4f4f5;
+      --muted:    #a1a1aa;
+      --subtle:   #71717a;
+      --green:    #4ade80;
+      --green-bg: #052e16;
+      --red:      #f87171;
+    }
+
+    /* ── Theme toggle ── */
+    .theme-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: var(--subtle);
+      display: flex;
+      align-items: center;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+      line-height: 1;
+    }
+    .theme-btn:hover { color: var(--text); background: var(--hover); }
+
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -332,7 +362,13 @@
     <div class="logo"><img src="../icons/icon48.png" alt="Havril" /></div>
     <h1>Havril</h1>
   </div>
-  <span class="version">v1.0</span>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span class="version">v1.0</span>
+    <button class="theme-btn" id="btn-theme" title="Toggle theme">
+      <svg id="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </div>
 </header>
 
 <!-- Login view -->
