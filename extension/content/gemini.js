@@ -1,4 +1,4 @@
-// content/gemini.js — MemoAI content script for gemini.google.com
+// content/gemini.js — Havril content script for gemini.google.com
 
 const SOURCE_MODEL = 'gemini';
 
@@ -59,7 +59,7 @@ async function loadMemories() {
       showMemoriesPanel(result.memories);
     }
   } catch (err) {
-    console.debug('[MemoAI] fetch skipped:', err.message);
+    console.debug('[Havril] fetch skipped:', err.message);
   }
 }
 
@@ -84,8 +84,7 @@ async function submitConversation() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 function init() {
-  injectSubmitButton(submitConversation);
-  injectMemoryPickerButton(getGeminiInput);
+  injectMemoryPickerButton(getGeminiInput, submitConversation);
   loadMemories();
   watchInputAndInject(getGeminiInput);
 }

@@ -1,4 +1,4 @@
-// content/chatgpt.js — MemoAI content script for chatgpt.com
+// content/chatgpt.js — Havril content script for chatgpt.com
 
 const SOURCE_MODEL = 'chatgpt';
 function getChatGPTInput() {
@@ -45,7 +45,7 @@ async function loadMemories() {
       showMemoriesPanel(result.memories);
     }
   } catch (err) {
-    console.debug('[MemoAI] fetch skipped:', err.message);
+    console.debug('[Havril] fetch skipped:', err.message);
   }
 }
 
@@ -70,10 +70,9 @@ async function submitConversation() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 function init() {
-  injectSubmitButton(submitConversation);
-  injectMemoryPickerButton(getChatGPTInput);
+  injectMemoryPickerButton(getChatGPTInput, submitConversation);
   loadMemories();
-  window.addEventListener('memoai-fetch-memories', async (e) => {
+  window.addEventListener('havril-fetch-memories', async (e) => {
     const { query, requestId } = e.detail;
     const result = await sendToBackground('FETCH_MEMORIES', {
       query,
@@ -81,7 +80,7 @@ function init() {
     }).catch(() => null);
 
     window.dispatchEvent(
-      new CustomEvent(`memoai-response-${requestId}`, {
+      new CustomEvent(`havril-response-${requestId}`, {
         detail: { memories: result?.memories || [] },
       }),
     );

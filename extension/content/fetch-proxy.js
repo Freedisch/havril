@@ -31,7 +31,7 @@
           if (
             userText &&
             typeof userText === 'string' &&
-            !userText.includes('[MemoAI Context]')
+            !userText.includes('[Havril Context]')
           ) {
             // Ask the content script (isolated world) to fetch memories
             const memories = await getMemoriesFromContentScript(userText);
@@ -49,7 +49,7 @@
         }
       } catch (err) {
         console.debug(
-          '[MemoAI proxy] error, sending original request:',
+          '[Havril proxy] error, sending original request:',
           err.message,
         );
       }
@@ -67,14 +67,14 @@
 
       // Listen for the response from the content script
       window.addEventListener(
-        `memoai-response-${requestId}`,
+        `havril-response-${requestId}`,
         (e) => resolve(e.detail?.memories || []),
         { once: true },
       );
 
       // Ask the content script to fetch memories
       window.dispatchEvent(
-        new CustomEvent('memoai-fetch-memories', {
+        new CustomEvent('havril-fetch-memories', {
           detail: { query, requestId },
         }),
       );
@@ -86,8 +86,8 @@
 
   function buildContext(memories) {
     const lines = memories.map((m) => `- ${m.content}`).join('\n');
-    return `[MemoAI Context — background info about me, use naturally]\n${lines}\n[End Context]\n\n`;
+    return `[Havril Context — background info about me, use naturally]\n${lines}\n[End Context]\n\n`;
   }
 
-  console.debug('[MemoAI] fetch proxy installed');
+  console.debug('[Havril] fetch proxy installed');
 })();

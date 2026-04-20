@@ -22,7 +22,7 @@ async function apiFetch(path, options = {}) {
 
   if (!token) {
     throw new Error(
-      'MemoAI token not set — open the extension popup to configure it',
+      'Havril token not set — open the extension popup to configure it',
     );
   }
 

@@ -37,20 +37,20 @@ function sendToBackground(type, payload) {
 
 // Shows a floating panel bottom-right listing the loaded memories.
 function showMemoriesPanel(memories) {
-  const existing = document.getElementById('memoai-memories-panel');
+  const existing = document.getElementById('havril-memories-panel');
   if (existing) existing.remove();
 
   if (!memories || memories.length === 0) return;
 
   const panel = document.createElement('div');
-  panel.id = 'memoai-memories-panel';
+  panel.id = 'havril-memories-panel';
 
   panel.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">
-        MemoAI — ${memories.length} memor${memories.length === 1 ? 'y' : 'ies'} loaded
+        Havril — ${memories.length} memor${memories.length === 1 ? 'y' : 'ies'} loaded
       </span>
-      <button id="memoai-close-panel" style="background:none;border:none;color:#71717a;cursor:pointer;font-size:16px;padding:0;line-height:1;">×</button>
+      <button id="havril-close-panel" style="background:none;border:none;color:#71717a;cursor:pointer;font-size:16px;padding:0;line-height:1;">×</button>
     </div>
     <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;">
       ${memories
@@ -84,7 +84,7 @@ function showMemoriesPanel(memories) {
   document.body.appendChild(panel);
 
   document
-    .getElementById('memoai-close-panel')
+    .getElementById('havril-close-panel')
     .addEventListener('click', () => {
       panel.remove();
     });
@@ -144,7 +144,7 @@ function setInputValue(el, value) {
 
 function buildContextBlock(memories) {
   const lines = memories.map((m) => `- ${m.content}`).join('\n');
-  return `[MemoAI Context — background info about me, use naturally]\n${lines}\n[End Context]\n\n`;
+  return `[Havril Context — background info about me, use naturally]\n${lines}\n[End Context]\n\n`;
 }
 
 // Intercepts Enter key, fetches memories using what the user typed as the
@@ -160,7 +160,7 @@ function watchInputAndInject(getInputEl, getSendButton = null) {
         if (e.key !== 'Enter' || e.shiftKey) return;
 
         const userMessage = getInputValue(inputEl).trim();
-        if (!userMessage || userMessage.includes('[MemoAI Context]')) return;
+        if (!userMessage || userMessage.includes('[Havril Context]')) return;
 
         // Block the platform from sending while we fetch
         e.preventDefault();
@@ -197,27 +197,28 @@ function watchInputAndInject(getInputEl, getSendButton = null) {
   });
 }
 
-// ── Memory Picker ─────────────────────────────────────────────────────────────
+// ── Havril button + panel (single floating UI) ────────────────────────────────
 
-// Creates a floating "Memories" button (bottom-left) that opens a search panel.
-// Clicking a memory result pastes it into the platform's chat input.
-function injectMemoryPickerButton(getInputEl) {
-  document.getElementById('memoai-picker-btn')?.remove();
-  document.getElementById('memoai-picker-panel')?.remove();
+// One button at bottom-right. Opens a panel with save + memory search/paste.
+// getInputEl: function returning the platform chat input element.
+// onSave: async function that saves the current conversation.
+function injectMemoryPickerButton(getInputEl, onSave) {
+  document.getElementById('havril-picker-btn')?.remove();
+  document.getElementById('havril-picker-panel')?.remove();
 
   let searchTimeout = null;
   let currentMemories = [];
 
   // ── Panel ──────────────────────────────────────────────────────────────────
   const panel = document.createElement('div');
-  panel.id = 'memoai-picker-panel';
+  panel.id = 'havril-picker-panel';
   Object.assign(panel.style, {
     position: 'fixed',
-    bottom: '72px',
-    left: '24px',
+    bottom: '68px',
+    right: '24px',
     zIndex: '999999',
     width: '320px',
-    maxHeight: '440px',
+    maxHeight: '460px',
     background: '#18181b',
     border: '1px solid #3f3f46',
     borderRadius: '12px',
@@ -230,37 +231,41 @@ function injectMemoryPickerButton(getInputEl) {
 
   panel.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #3f3f46;flex-shrink:0;">
-      <div style="display:flex;align-items:center;gap:7px;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      <span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">Havril</span>
+      <button id="havril-picker-close" style="background:none;border:none;color:#71717a;cursor:pointer;font-size:18px;line-height:1;padding:2px 6px;border-radius:4px;" title="Close">&#xD7;</button>
+    </div>
+    <div style="padding:10px 12px;border-bottom:1px solid #3f3f46;flex-shrink:0;">
+      <button id="havril-save-btn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:7px;padding:8px 12px;background:#27272a;color:#f4f4f5;border:1px solid #3f3f46;border-radius:7px;font-size:13px;font-family:system-ui,sans-serif;font-weight:500;cursor:pointer;transition:all 0.15s;box-sizing:border-box;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
         </svg>
-        <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">Your Memories</span>
-      </div>
-      <button id="memoai-picker-close" style="background:none;border:none;color:#71717a;cursor:pointer;font-size:18px;line-height:1;padding:2px 6px;border-radius:4px;" title="Close">×</button>
+        Save conversation
+      </button>
     </div>
     <div style="padding:10px 12px;border-bottom:1px solid #27272a;flex-shrink:0;">
-      <input id="memoai-picker-search" type="text" placeholder="Search memories…" autocomplete="off" style="width:100%;box-sizing:border-box;background:#09090b;border:1px solid #3f3f46;border-radius:6px;color:#f4f4f5;font-size:13px;padding:7px 10px;outline:none;font-family:system-ui,sans-serif;">
+      <input id="havril-picker-search" type="text" placeholder="Search memories…" autocomplete="off" style="width:100%;box-sizing:border-box;background:#09090b;border:1px solid #3f3f46;border-radius:6px;color:#f4f4f5;font-size:13px;padding:7px 10px;outline:none;font-family:system-ui,sans-serif;">
     </div>
-    <div id="memoai-picker-results" style="overflow-y:auto;flex:1;"></div>
+    <div id="havril-picker-results" style="overflow-y:auto;flex:1;"></div>
   `;
 
-  const resultsEl = panel.querySelector('#memoai-picker-results');
-  const searchInput = panel.querySelector('#memoai-picker-search');
+  const resultsEl = panel.querySelector('#havril-picker-results');
+  const searchInput = panel.querySelector('#havril-picker-search');
+  const saveBtn = panel.querySelector('#havril-save-btn');
 
-  // ── Floating button ────────────────────────────────────────────────────────
+  // ── Floating trigger button ────────────────────────────────────────────────
   const btn = document.createElement('button');
-  btn.id = 'memoai-picker-btn';
-  btn.title = 'Search and paste memories';
+  btn.id = 'havril-picker-btn';
+  btn.title = 'Havril';
   btn.innerHTML = `
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 8v4l3 3"/>
     </svg>
-    <span>Memories</span>
+    Havril
   `;
   Object.assign(btn.style, {
     position: 'fixed',
     bottom: '24px',
-    left: '24px',
+    right: '24px',
     zIndex: '999999',
     display: 'flex',
     alignItems: 'center',
@@ -291,7 +296,6 @@ function injectMemoryPickerButton(getInputEl) {
   function openPanel() {
     panel.style.display = 'flex';
     searchInput.value = '';
-    searchInput.focus();
     loadAllMemories();
   }
 
@@ -303,11 +307,57 @@ function injectMemoryPickerButton(getInputEl) {
     panel.style.display !== 'none' ? closePanel() : openPanel();
   });
 
-  panel.querySelector('#memoai-picker-close').addEventListener('click', closePanel);
+  panel.querySelector('#havril-picker-close')?.addEventListener('click', closePanel);
+
+  // ── Save button ────────────────────────────────────────────────────────────
+  if (onSave && saveBtn) {
+    saveBtn.addEventListener('mouseenter', () => {
+      if (!saveBtn.disabled) saveBtn.style.background = '#3f3f46';
+    });
+    saveBtn.addEventListener('mouseleave', () => {
+      if (!saveBtn.disabled) saveBtn.style.background = '#27272a';
+    });
+
+    saveBtn.addEventListener('click', async () => {
+      saveBtn.disabled = true;
+      saveBtn.style.opacity = '0.6';
+      saveBtn.textContent = 'Saving…';
+      try {
+        await onSave();
+        saveBtn.textContent = '✓ Saved';
+        saveBtn.style.background = '#166534';
+        saveBtn.style.borderColor = '#16a34a';
+        saveBtn.style.opacity = '1';
+        setTimeout(resetSaveBtn, 2500);
+      } catch (err) {
+        saveBtn.textContent = '✗ Failed';
+        saveBtn.style.background = '#7f1d1d';
+        saveBtn.style.borderColor = '#dc2626';
+        saveBtn.style.opacity = '1';
+        console.error('[Havril]', err);
+        setTimeout(resetSaveBtn, 2500);
+      }
+    });
+  } else if (saveBtn) {
+    saveBtn.style.display = 'none';
+  }
+
+  function resetSaveBtn() {
+    saveBtn.disabled = false;
+    saveBtn.style.background = '#27272a';
+    saveBtn.style.borderColor = '#3f3f46';
+    saveBtn.style.opacity = '1';
+    saveBtn.innerHTML = `
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+      </svg>
+      Save conversation
+    `;
+  }
 
   // ── Search input ───────────────────────────────────────────────────────────
   searchInput.addEventListener('keydown', (e) => {
-    e.stopPropagation(); // don't let keypresses leak to the AI platform
+    e.stopPropagation();
     if (e.key === 'Escape') closePanel();
   });
 
@@ -330,7 +380,7 @@ function injectMemoryPickerButton(getInputEl) {
       renderResults(memories);
     } catch (err) {
       const msg = err.message?.includes('token not set')
-        ? 'Sign in via the MemoAI popup to access memories'
+        ? 'Sign in via the Havril popup'
         : 'Could not load memories';
       showPlaceholder(msg);
     }
@@ -340,8 +390,8 @@ function injectMemoryPickerButton(getInputEl) {
     try {
       const data = await sendToBackground('FETCH_MEMORIES', { query, limit: 10 });
       renderResults(data?.memories || []);
-    } catch {
-      // keep showing previous results on search error
+    } catch (_e) {
+      // keep previous results on search error
     }
   }
 
@@ -359,48 +409,41 @@ function injectMemoryPickerButton(getInputEl) {
 
   function renderResults(memories) {
     currentMemories = memories;
-
     if (memories.length === 0) {
       showPlaceholder('No memories found');
       return;
     }
-
     resultsEl.innerHTML = memories.map((m, i) => {
       const color = TYPE_COLORS[m.type] || '#71717a';
       const preview = (m.content || '').length > 110
         ? m.content.slice(0, 110) + '…'
         : m.content || '';
       const pct = Math.round((m.importance || 0) * 100);
-      return `
-        <div class="memoai-mi" data-idx="${i}" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #27272a;transition:background 0.1s;">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
-            <span style="font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:${color};background:${color}22;padding:1px 6px;border-radius:3px;">${escapeHtml(m.type || 'memory')}</span>
-            <span style="font-size:10px;color:#52525b;margin-left:auto;">${pct}%</span>
-          </div>
-          <div style="font-size:12px;color:#d4d4d8;line-height:1.5;">${escapeHtml(preview)}</div>
+      return `<div class="havril-mi" data-idx="${i}" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #27272a;transition:background 0.1s;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span style="font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:${color};background:${color}22;padding:1px 6px;border-radius:3px;">${escapeHtml(m.type || 'memory')}</span>
+          <span style="font-size:10px;color:#52525b;margin-left:auto;">${pct}%</span>
         </div>
-      `;
+        <div style="font-size:12px;color:#d4d4d8;line-height:1.5;">${escapeHtml(preview)}</div>
+      </div>`;
     }).join('');
   }
 
-  // Single delegated click listener (attached once)
   resultsEl.addEventListener('click', (e) => {
-    const item = e.target.closest('.memoai-mi');
+    const item = e.target.closest('.havril-mi');
     if (!item) return;
-    const idx = parseInt(item.dataset.idx, 10);
-    const memory = currentMemories[idx];
+    const memory = currentMemories[parseInt(item.dataset.idx, 10)];
     if (!memory) return;
     pasteMemoryToInput(memory.content);
     closePanel();
   });
 
-  // Hover effect via delegation
   resultsEl.addEventListener('mouseover', (e) => {
-    const item = e.target.closest('.memoai-mi');
+    const item = e.target.closest('.havril-mi');
     if (item) item.style.background = '#27272a';
   });
   resultsEl.addEventListener('mouseout', (e) => {
-    const item = e.target.closest('.memoai-mi');
+    const item = e.target.closest('.havril-mi');
     if (item) item.style.background = 'transparent';
   });
 
@@ -408,12 +451,11 @@ function injectMemoryPickerButton(getInputEl) {
   function pasteMemoryToInput(content) {
     const inputEl = getInputEl();
     if (!inputEl) {
-      showToast('Chat input not found — try clicking the chat box first', 'error');
+      showToast('Chat input not found — click the chat box first', 'error');
       return;
     }
     const existing = getInputValue(inputEl).trim();
-    const newValue = existing ? `${existing}\n\n${content}` : content;
-    setInputValue(inputEl, newValue);
+    setInputValue(inputEl, existing ? `${existing}\n\n${content}` : content);
     inputEl.focus();
     showToast('Memory pasted ✓', 'success');
   }
@@ -422,93 +464,14 @@ function injectMemoryPickerButton(getInputEl) {
   document.body.appendChild(btn);
 }
 
-// ── Submit button ─────────────────────────────────────────────────────────────
-
-function injectSubmitButton(onClick) {
-  if (document.getElementById('memoai-submit-btn')) return;
-
-  const btn = document.createElement('button');
-  btn.id = 'memoai-submit-btn';
-  btn.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
-      <path d="M12 8v4l3 3"/>
-    </svg>
-    Save to Memory
-  `;
-
-  Object.assign(btn.style, {
-    position: 'fixed',
-    bottom: '24px',
-    right: '24px',
-    zIndex: '999999',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 16px',
-    background: '#18181b',
-    color: '#f4f4f5',
-    border: '1px solid #3f3f46',
-    borderRadius: '8px',
-    fontSize: '13px',
-    fontFamily: 'system-ui, sans-serif',
-    fontWeight: '500',
-    cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-    transition: 'all 0.15s ease',
-  });
-
-  btn.addEventListener('mouseenter', () => {
-    btn.style.background = '#27272a';
-    btn.style.borderColor = '#71717a';
-  });
-  btn.addEventListener('mouseleave', () => {
-    btn.style.background = '#18181b';
-    btn.style.borderColor = '#3f3f46';
-  });
-
-  btn.addEventListener('click', async () => {
-    btn.disabled = true;
-    btn.innerHTML = `<span style="opacity:0.6">Saving…</span>`;
-    try {
-      await onClick();
-      btn.innerHTML = `✓ Saved`;
-      btn.style.background = '#166534';
-      btn.style.borderColor = '#16a34a';
-      setTimeout(() => resetButton(btn), 2500);
-    } catch (err) {
-      btn.innerHTML = `✗ Failed`;
-      btn.style.background = '#7f1d1d';
-      btn.style.borderColor = '#dc2626';
-      console.error('[MemoAI]', err);
-      setTimeout(() => resetButton(btn), 2500);
-    }
-  });
-
-  document.body.appendChild(btn);
-}
-
-function resetButton(btn) {
-  btn.disabled = false;
-  btn.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
-      <path d="M12 8v4l3 3"/>
-    </svg>
-    Save to Memory
-  `;
-  btn.style.background = '#18181b';
-  btn.style.borderColor = '#3f3f46';
-}
-
 // ── Toast notification ────────────────────────────────────────────────────────
 
 function showToast(message, type = 'info') {
-  const existing = document.getElementById('memoai-toast');
+  const existing = document.getElementById('havril-toast');
   if (existing) existing.remove();
 
   const toast = document.createElement('div');
-  toast.id = 'memoai-toast';
+  toast.id = 'havril-toast';
   toast.textContent = message;
 
   const bg =

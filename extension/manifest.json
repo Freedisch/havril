@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "MemoAI",
+  "name": "Havril",
   "version": "1.0.0",
   "description": "Shared AI memory across Claude, ChatGPT, and Gemini",
 
@@ -21,7 +21,7 @@
 
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "MemoAI"
+    "default_title": "Havril"
   },
 
   "content_scripts": [
