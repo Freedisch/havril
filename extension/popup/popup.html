@@ -4,49 +4,70 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Havril</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:      #09090b;
-      --surface: #18181b;
-      --border:  #27272a;
-      --muted:   #52525b;
-      --subtle:  #a1a1aa;
-      --text:    #f4f4f5;
-      --accent:  #e4e4e7;
-      --green:   #4ade80;
-      --red:     #f87171;
-      --amber:   #e8a040;
-      --radius:  8px;
+      --bg:       #ffffff;
+      --surface:  #fafafa;
+      --hover:    #f4f4f5;
+      --border:   #e4e4e7;
+      --border2:  #d4d4d8;
+      --text:     #09090b;
+      --muted:    #52525b;
+      --subtle:   #a1a1aa;
+      --green:    #15803d;
+      --green-bg: #f0fdf4;
+      --red:      #dc2626;
+      --radius:   8px;
+      --font:     'Sora', system-ui, -apple-system, sans-serif;
+      --mono:     'JetBrains Mono', 'SF Mono', monospace;
     }
 
     body {
       width: 320px;
       background: var(--bg);
       color: var(--text);
-      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-family: var(--font);
       font-size: 13px;
       padding: 20px;
+      border: 1px solid var(--border);
     }
 
+    /* ── Header ── */
     header {
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: space-between;
       margin-bottom: 20px;
       padding-bottom: 16px;
       border-bottom: 1px solid var(--border);
     }
 
-    .logo { width: 28px; height: 28px; }
+    .logo-row { display: flex; align-items: center; gap: 9px; }
+    .logo { width: 24px; height: 24px; flex-shrink: 0; }
     .logo img { width: 100%; height: 100%; object-fit: contain; }
 
-    h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
-    h1 span { color: var(--amber); }
+    h1 {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: var(--text);
+    }
 
-    /* ── Login view ── */
-    #view-login { display: flex; flex-direction: column; gap: 10px; }
+    .version {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--subtle);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── OAuth buttons ── */
+    #view-login { display: flex; flex-direction: column; gap: 8px; }
 
     .oauth-btn {
       display: flex;
@@ -55,7 +76,7 @@
       width: 100%;
       padding: 10px 14px;
       border-radius: var(--radius);
-      font-family: inherit;
+      font-family: var(--font);
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
@@ -63,16 +84,24 @@
       border: 1px solid var(--border);
       background: var(--surface);
       color: var(--text);
+      letter-spacing: -0.01em;
     }
-    .oauth-btn:hover { border-color: var(--subtle); background: #27272a; }
+    .oauth-btn:hover {
+      background: var(--hover);
+      border-color: var(--border2);
+    }
     .oauth-btn svg { flex-shrink: 0; }
 
     .divider {
       display: flex;
       align-items: center;
       gap: 10px;
-      color: var(--muted);
-      font-size: 11px;
+      color: var(--subtle);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin: 2px 0;
     }
     .divider::before, .divider::after {
       content: '';
@@ -84,25 +113,28 @@
     .advanced-toggle {
       background: none;
       border: none;
-      color: var(--muted);
-      font-family: inherit;
-      font-size: 11px;
+      color: var(--subtle);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       cursor: pointer;
       text-align: left;
       padding: 0;
-      letter-spacing: 0.04em;
+      transition: color 0.15s;
     }
-    .advanced-toggle:hover { color: var(--subtle); }
+    .advanced-toggle:hover { color: var(--muted); }
 
     #advanced { display: none; flex-direction: column; gap: 6px; }
     #advanced.open { display: flex; }
 
     label {
-      font-size: 11px;
+      font-family: var(--mono);
+      font-size: 10px;
       font-weight: 500;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--subtle);
     }
 
     input {
@@ -112,95 +144,24 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       color: var(--text);
-      font-family: inherit;
+      font-family: var(--font);
       font-size: 12px;
       outline: none;
+      transition: border-color 0.15s;
+      letter-spacing: -0.01em;
     }
-    input:focus { border-color: var(--subtle); }
-    input::placeholder { color: var(--muted); }
+    input:focus { border-color: var(--text); }
+    input::placeholder { color: var(--subtle); }
 
-    /* ── Connected view ── */
-    #view-connected { display: none; flex-direction: column; gap: 14px; }
-
-    .user-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .user-info { flex: 1; min-width: 0; }
-    .user-name { font-size: 13px; font-weight: 500; truncate: ellipsis; }
-    .user-email { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    .status-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 12px;
-      color: var(--subtle);
-    }
-    .status-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--muted); flex-shrink: 0;
-    }
-    .status-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
-
-    .stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    .stat {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 10px;
+    #msg {
+      font-size: 11px;
       text-align: center;
+      min-height: 14px;
+      color: var(--subtle);
+      margin-top: 2px;
+      font-family: var(--mono);
     }
-    .stat-value { font-size: 20px; font-weight: 600; display: block; margin-bottom: 2px; }
-    .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-
-    .platforms { display: flex; flex-direction: column; gap: 6px; }
-    .platform {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 7px 10px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 12px;
-    }
-    .platform-name { color: var(--text); }
-    .badge { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
-    .badge-active { background: rgba(74,222,128,0.1); color: var(--green); }
-
-    .btn-logout {
-      width: 100%;
-      padding: 8px;
-      border-radius: var(--radius);
-      font-family: inherit;
-      font-size: 12px;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      transition: all 0.15s;
-    }
-    .btn-logout:hover { color: var(--red); border-color: var(--red); }
+    #msg.error { color: var(--red); }
 
     /* ── Connecting overlay ── */
     #view-connecting {
@@ -211,37 +172,173 @@
       padding: 20px 0;
     }
     .spinner {
-      width: 24px; height: 24px;
+      width: 22px; height: 22px;
       border: 2px solid var(--border);
-      border-top-color: var(--amber);
+      border-top-color: var(--text);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    #msg {
-      font-size: 11px;
-      text-align: center;
-      min-height: 14px;
-      color: var(--muted);
-      margin-top: 4px;
+    /* ── Connected view ── */
+    #view-connected { display: none; flex-direction: column; gap: 12px; }
+
+    .user-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
     }
-    #msg.error { color: var(--red); }
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--hover);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .user-email {
+      font-size: 11px;
+      color: var(--subtle);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: var(--mono);
+      margin-top: 1px;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--bg);
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--border2);
+      flex-shrink: 0;
+    }
+    .status-dot.connected {
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(21,128,61,0.12);
+    }
+    .status-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 10px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 22px;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 3px;
+      color: var(--text);
+      letter-spacing: -0.03em;
+    }
+    .stat-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .platforms { display: flex; flex-direction: column; gap: 4px; }
+    .platform {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .badge-active {
+      background: rgba(21,128,61,0.08);
+      color: var(--green);
+      border: 1px solid rgba(21,128,61,0.15);
+    }
+
+    .btn-logout {
+      width: 100%;
+      padding: 9px;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--subtle);
+      transition: all 0.15s;
+      letter-spacing: -0.01em;
+    }
+    .btn-logout:hover {
+      color: var(--red);
+      border-color: rgba(220,38,38,0.3);
+      background: rgba(220,38,38,0.04);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    <img src="../icons/icon48.png" alt="Havril" />
+  <div class="logo-row">
+    <div class="logo"><img src="../icons/icon48.png" alt="Havril" /></div>
+    <h1>Havril</h1>
   </div>
-  <h1>Hav<span>ril</span></h1>
+  <span class="version">v1.0</span>
 </header>
 
 <!-- Login view -->
 <div id="view-login">
   <button class="oauth-btn" id="btn-google">
-    <svg width="16" height="16" viewBox="0 0 24 24">
+    <svg width="15" height="15" viewBox="0 0 24 24">
       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
@@ -251,7 +348,7 @@
   </button>
 
   <button class="oauth-btn" id="btn-github">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--text)">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--text)">
       <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
     </svg>
     Continue with GitHub
@@ -271,7 +368,7 @@
 <!-- Connecting view -->
 <div id="view-connecting">
   <div class="spinner"></div>
-  <span style="color: var(--subtle); font-size: 12px;">Waiting for login…</span>
+  <span style="color:var(--subtle);font-size:12px;font-family:var(--mono);letter-spacing:0.04em;">Waiting for login…</span>
   <button class="btn-logout" id="btn-cancel">Cancel</button>
 </div>
 
@@ -287,7 +384,7 @@
 
   <div class="status-bar">
     <div class="status-dot connected"></div>
-    <span>Connected to Havril</span>
+    <span class="status-label">Connected to Havril</span>
   </div>
 
   <div class="stats">
@@ -302,9 +399,9 @@
   </div>
 
   <div class="platforms">
-    <div class="platform"><span class="platform-name">Claude.ai</span><span class="badge badge-active">active</span></div>
-    <div class="platform"><span class="platform-name">ChatGPT</span><span class="badge badge-active">active</span></div>
-    <div class="platform"><span class="platform-name">Gemini</span><span class="badge badge-active">active</span></div>
+    <div class="platform"><span>Claude.ai</span><span class="badge badge-active">active</span></div>
+    <div class="platform"><span>ChatGPT</span><span class="badge badge-active">active</span></div>
+    <div class="platform"><span>Gemini</span><span class="badge badge-active">active</span></div>
   </div>
 
   <button class="btn-logout" id="btn-logout">Sign out</button>
