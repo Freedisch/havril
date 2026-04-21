@@ -1,22 +1,33 @@
-// content/gemini.js — MemoAI content script for gemini.google.com
+// content/gemini.js — Havril content script for gemini.google.com
 
-const SOURCE_MODEL = "gemini";
+const SOURCE_MODEL = 'gemini';
 
+function getGeminiInput() {
+  return (
+    document.querySelector('.ql-editor') ||
+    document.querySelector('rich-textarea .ql-editor') ||
+    document.querySelector('[contenteditable="true"]')
+  );
+}
 // Extract conversation turns from the Gemini DOM.
 function extractConversation() {
   const messages = [];
 
   // User messages
-  document.querySelectorAll(".user-query-container, .query-text").forEach((el) => {
-    const content = el.innerText?.trim();
-    if (content) messages.push({ role: "user", content, _el: el });
-  });
+  document
+    .querySelectorAll('.user-query-container, .query-text')
+    .forEach((el) => {
+      const content = el.innerText?.trim();
+      if (content) messages.push({ role: 'user', content, _el: el });
+    });
 
   // Model responses
-  document.querySelectorAll("model-response, .response-content").forEach((el) => {
-    const content = el.innerText?.trim();
-    if (content) messages.push({ role: "assistant", content, _el: el });
-  });
+  document
+    .querySelectorAll('model-response, .response-content')
+    .forEach((el) => {
+      const content = el.innerText?.trim();
+      if (content) messages.push({ role: 'assistant', content, _el: el });
+    });
 
   // Sort by DOM position so the conversation is in the right order
   messages.sort((a, b) => {
@@ -31,36 +42,41 @@ function extractConversation() {
 
 async function loadMemories() {
   // Gemini's user input appears in .query-text
-  const firstUserEl = document.querySelector(".query-text, .user-query-container");
+  const firstUserEl = document.querySelector(
+    '.query-text, .user-query-container',
+  );
   if (!firstUserEl) return;
 
   const query = firstUserEl.innerText?.trim();
   if (!query) return;
 
   try {
-    const result = await sendToBackground("FETCH_MEMORIES", { query, limit: 5 });
+    const result = await sendToBackground('FETCH_MEMORIES', {
+      query,
+      limit: 5,
+    });
     if (result.memories?.length > 0) {
       showMemoriesPanel(result.memories);
     }
   } catch (err) {
-    console.debug("[MemoAI] fetch skipped:", err.message);
+    console.debug('[Havril] fetch skipped:', err.message);
   }
 }
 
 async function submitConversation() {
   const conversation = extractConversation();
   if (conversation.length === 0) {
-    throw new Error("No conversation found on this page");
+    throw new Error('No conversation found on this page');
   }
 
-  const result = await sendToBackground("SUBMIT_CONVERSATION", {
+  const result = await sendToBackground('SUBMIT_CONVERSATION', {
     conversation,
     sourceModel: SOURCE_MODEL,
   });
 
   showToast(
-    `✓ Saved ${result.memories_created} memor${result.memories_created === 1 ? "y" : "ies"}`,
-    "success"
+    `✓ Saved ${result.memories_created} memor${result.memories_created === 1 ? 'y' : 'ies'}`,
+    'success',
   );
   return result;
 }
@@ -68,8 +84,9 @@ async function submitConversation() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 function init() {
-  injectSubmitButton(submitConversation);
+  injectMemoryPickerButton(getGeminiInput, submitConversation);
   loadMemories();
+  watchInputAndInject(getGeminiInput);
 }
 
 let lastUrl = location.href;
@@ -80,4 +97,5 @@ new MutationObserver(() => {
   }
 }).observe(document.body, { childList: true, subtree: true });
 
-setTimeout(init, 2000); // Gemini loads slightly slower
+setTimeout(init, 2000);
+// Gemini loads slightly slower

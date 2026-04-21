@@ -1,7 +1,15 @@
-// content/claude.js — MemoAI content script for Claude.ai
+// content/claude.js — Havril content script for Claude.ai
 
 const PLATFORM = 'claude.ai';
 const SOURCE_MODEL = 'claude-sonnet-4-5';
+
+function getClaudeInput() {
+  return (
+    document.querySelector('[contenteditable="true"][data-placeholder]') ||
+    document.querySelector('.ProseMirror') ||
+    document.querySelector('[contenteditable="true"]')
+  );
+}
 
 // Extract all conversation turns from the Claude.ai DOM.
 function extractConversation() {
@@ -51,11 +59,11 @@ async function loadMemories() {
     }
   } catch (err) {
     // Silent — not having memories is fine, don't interrupt the user
-    console.debug('[MemoAI] fetch skipped:', err.message);
+    console.debug('[Havril] fetch skipped:', err.message);
   }
 }
 
-// Submit the current conversation to MemoAI.
+// Submit the current conversation to Havril.
 async function submitConversation() {
   const conversation = extractConversation();
   if (conversation.length === 0) {
@@ -77,8 +85,9 @@ async function submitConversation() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 function init() {
-  injectSubmitButton(submitConversation);
+  injectMemoryPickerButton(getClaudeInput, submitConversation);
   loadMemories();
+  watchInputAndInject(getClaudeInput);
 }
 
 // Claude.ai is a SPA — re-init when the URL changes (new conversation)

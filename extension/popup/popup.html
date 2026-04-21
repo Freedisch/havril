@@ -3,64 +3,223 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MemoAI</title>
+  <title>Havril</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #09090b;
-      --surface:  #18181b;
-      --border:   #27272a;
+      --bg:       #ffffff;
+      --surface:  #fafafa;
+      --hover:    #f4f4f5;
+      --border:   #e4e4e7;
+      --border2:  #d4d4d8;
+      --text:     #09090b;
       --muted:    #52525b;
       --subtle:   #a1a1aa;
-      --text:     #f4f4f5;
-      --accent:   #e4e4e7;
-      --green:    #4ade80;
-      --red:      #f87171;
+      --green:    #15803d;
+      --green-bg: #f0fdf4;
+      --red:      #dc2626;
       --radius:   8px;
+      --font:     'Sora', system-ui, -apple-system, sans-serif;
+      --mono:     'JetBrains Mono', 'SF Mono', monospace;
     }
 
     body {
       width: 320px;
       background: var(--bg);
       color: var(--text);
-      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-family: var(--font);
       font-size: 13px;
       padding: 20px;
+      border: 1px solid var(--border);
     }
 
+    /* ── Header ── */
     header {
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: space-between;
       margin-bottom: 20px;
       padding-bottom: 16px;
       border-bottom: 1px solid var(--border);
     }
 
-    .logo {
-      width: 28px;
-      height: 28px;
-      background: var(--text);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .logo svg { color: var(--bg); }
+    .logo-row { display: flex; align-items: center; gap: 9px; }
+    .logo { width: 24px; height: 24px; flex-shrink: 0; }
+    .logo img { width: 100%; height: 100%; object-fit: contain; }
 
     h1 {
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: -0.02em;
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
       color: var(--text);
     }
 
-    h1 span {
-      color: var(--muted);
-      font-weight: 400;
+    .version {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--subtle);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── OAuth buttons ── */
+    #view-login { display: flex; flex-direction: column; gap: 8px; }
+
+    .oauth-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .oauth-btn:hover {
+      background: var(--hover);
+      border-color: var(--border2);
+    }
+    .oauth-btn svg { flex-shrink: 0; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--subtle);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin: 2px 0;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .advanced-toggle {
+      background: none;
+      border: none;
+      color: var(--subtle);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-align: left;
+      padding: 0;
+      transition: color 0.15s;
+    }
+    .advanced-toggle:hover { color: var(--muted); }
+
+    #advanced { display: none; flex-direction: column; gap: 6px; }
+    #advanced.open { display: flex; }
+
+    label {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--subtle);
+    }
+
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s;
+      letter-spacing: -0.01em;
+    }
+    input:focus { border-color: var(--text); }
+    input::placeholder { color: var(--subtle); }
+
+    #msg {
+      font-size: 11px;
+      text-align: center;
+      min-height: 14px;
+      color: var(--subtle);
+      margin-top: 2px;
+      font-family: var(--mono);
+    }
+    #msg.error { color: var(--red); }
+
+    /* ── Connecting overlay ── */
+    #view-connecting {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 0;
+    }
+    .spinner {
+      width: 22px; height: 22px;
+      border: 2px solid var(--border);
+      border-top-color: var(--text);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Connected view ── */
+    #view-connected { display: none; flex-direction: column; gap: 12px; }
+
+    .user-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--hover);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .user-email {
+      font-size: 11px;
+      color: var(--subtle);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: var(--mono);
+      margin-top: 1px;
     }
 
     .status-bar {
@@ -68,122 +227,53 @@
       align-items: center;
       gap: 8px;
       padding: 8px 12px;
-      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      margin-bottom: 16px;
       font-size: 12px;
-      color: var(--subtle);
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--muted);
-      flex-shrink: 0;
-      transition: background 0.2s;
-    }
-    .status-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
-    .status-dot.error     { background: var(--red); }
-
-    label {
-      display: block;
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 6px;
+      background: var(--bg);
     }
-
-    input {
-      width: 100%;
-      padding: 9px 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-      font-family: inherit;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.15s;
-      margin-bottom: 14px;
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--border2);
+      flex-shrink: 0;
     }
-
-    input:focus { border-color: var(--subtle); }
-    input::placeholder { color: var(--muted); }
-
-    .row { display: flex; gap: 8px; }
-
-    button {
-      flex: 1;
-      padding: 9px 14px;
-      border-radius: var(--radius);
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-      border: 1px solid transparent;
+    .status-dot.connected {
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(21,128,61,0.12);
     }
-
-    .btn-primary {
-      background: var(--text);
-      color: var(--bg);
-      border-color: var(--text);
-    }
-    .btn-primary:hover { background: var(--accent); }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--subtle);
-      border-color: var(--border);
-    }
-    .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
-
-    .divider {
-      height: 1px;
-      background: var(--border);
-      margin: 16px 0;
-    }
+    .status-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; }
 
     .stats {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 4px;
     }
-
     .stat {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 10px 8px;
+      padding: 12px 10px;
       text-align: center;
     }
-
     .stat-value {
-      font-size: 18px;
+      font-size: 22px;
       font-weight: 600;
-      color: var(--text);
       display: block;
-      margin-bottom: 2px;
+      margin-bottom: 3px;
+      color: var(--text);
+      letter-spacing: -0.03em;
     }
-
     .stat-label {
-      font-size: 10px;
-      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--subtle);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.1em;
     }
 
-    .platforms {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
+    .platforms { display: flex; flex-direction: column; gap: 4px; }
     .platform {
       display: flex;
       align-items: center;
@@ -193,94 +283,165 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       font-size: 12px;
-      color: var(--subtle);
+      color: var(--muted);
     }
-
-    .platform-name { color: var(--text); }
-
     .badge {
-      font-size: 10px;
+      font-family: var(--mono);
+      font-size: 9px;
       padding: 2px 7px;
       border-radius: 4px;
       font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
-    .badge-active   { background: rgba(74,222,128,0.1); color: var(--green); }
-    .badge-inactive { background: var(--border); color: var(--muted); }
+    .badge-active {
+      background: rgba(21,128,61,0.08);
+      color: var(--green);
+      border: 1px solid rgba(21,128,61,0.15);
+    }
 
-    #msg {
-      margin-top: 12px;
+    .btn-logout {
+      width: 100%;
+      padding: 9px;
+      border-radius: var(--radius);
+      font-family: var(--font);
       font-size: 12px;
-      text-align: center;
-      min-height: 16px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
       color: var(--subtle);
+      transition: all 0.15s;
+      letter-spacing: -0.01em;
     }
-    #msg.success { color: var(--green); }
-    #msg.error   { color: var(--red); }
+    .btn-logout:hover {
+      color: var(--red);
+      border-color: rgba(220,38,38,0.3);
+      background: rgba(220,38,38,0.04);
+    }
+
+    /* ── Dark theme ── */
+    [data-theme="dark"] {
+      --bg:       #09090b;
+      --surface:  #18181b;
+      --hover:    #27272a;
+      --border:   #27272a;
+      --border2:  #3f3f46;
+      --text:     #f4f4f5;
+      --muted:    #a1a1aa;
+      --subtle:   #71717a;
+      --green:    #4ade80;
+      --green-bg: #052e16;
+      --red:      #f87171;
+    }
+
+    /* ── Theme toggle ── */
+    .theme-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: var(--subtle);
+      display: flex;
+      align-items: center;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+      line-height: 1;
+    }
+    .theme-btn:hover { color: var(--text); background: var(--hover); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M12 8v4l3 3"/>
-    </svg>
+  <div class="logo-row">
+    <div class="logo"><img src="../icons/icon48.png" alt="Havril" /></div>
+    <h1>Havril</h1>
   </div>
-  <h1>MemoAI <span>/ memory</span></h1>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span class="version">v1.0</span>
+    <button class="theme-btn" id="btn-theme" title="Toggle theme">
+      <svg id="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </div>
 </header>
 
-<div class="status-bar">
-  <div class="status-dot" id="status-dot"></div>
-  <span id="status-text">Not connected</span>
+<!-- Login view -->
+<div id="view-login">
+  <button class="oauth-btn" id="btn-google">
+    <svg width="15" height="15" viewBox="0 0 24 24">
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    </svg>
+    Continue with Google
+  </button>
+
+  <button class="oauth-btn" id="btn-github">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--text)">
+      <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+    </svg>
+    Continue with GitHub
+  </button>
+
+  <div class="divider">advanced</div>
+
+  <button class="advanced-toggle" id="advanced-toggle">▸ Server URL</button>
+  <div id="advanced">
+    <label for="serverUrl">Server URL</label>
+    <input id="serverUrl" type="url" placeholder="http://localhost:8080" />
+  </div>
+
+  <p id="msg"></p>
 </div>
 
-<label>Server URL</label>
-<input id="serverUrl" type="url" placeholder="http://localhost:8080" />
-
-<label>API Token</label>
-<input id="token" type="password" placeholder="memo_..." />
-
-<div class="row">
-  <button class="btn-ghost" id="test-btn">Test</button>
-  <button class="btn-primary" id="save-btn">Save</button>
+<!-- Connecting view -->
+<div id="view-connecting">
+  <div class="spinner"></div>
+  <span style="color:var(--subtle);font-size:12px;font-family:var(--mono);letter-spacing:0.04em;">Waiting for login…</span>
+  <button class="btn-logout" id="btn-cancel">Cancel</button>
 </div>
 
-<div class="divider"></div>
+<!-- Connected view -->
+<div id="view-connected">
+  <div class="user-row">
+    <div class="avatar"><img id="user-avatar" src="" alt="" /></div>
+    <div class="user-info">
+      <div class="user-name" id="user-name">—</div>
+      <div class="user-email" id="user-email">—</div>
+    </div>
+  </div>
 
-<div class="stats">
-  <div class="stat">
-    <span class="stat-value" id="stat-memories">—</span>
-    <span class="stat-label">Memories</span>
+  <div class="status-bar">
+    <div class="status-dot connected"></div>
+    <span class="status-label">Connected to Havril</span>
   </div>
-  <div class="stat">
-    <span class="stat-value" id="stat-models">—</span>
-    <span class="stat-label">Models</span>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-value" id="stat-memories">—</span>
+      <span class="stat-label">Memories</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-models">3</span>
+      <span class="stat-label">Platforms</span>
+    </div>
   </div>
-  <div class="stat">
-    <span class="stat-value" id="stat-sessions">—</span>
-    <span class="stat-label">Sessions</span>
+
+  <div class="platforms">
+    <div class="platform"><span>Claude.ai</span><span class="badge badge-active">active</span></div>
+    <div class="platform"><span>ChatGPT</span><span class="badge badge-active">active</span></div>
+    <div class="platform"><span>Gemini</span><span class="badge badge-active">active</span></div>
   </div>
+
+  <button class="btn-logout" id="btn-logout">Sign out</button>
 </div>
-
-<div class="divider"></div>
-
-<div class="platforms">
-  <div class="platform">
-    <span class="platform-name">Claude.ai</span>
-    <span class="badge badge-active" id="badge-claude">active</span>
-  </div>
-  <div class="platform">
-    <span class="platform-name">ChatGPT</span>
-    <span class="badge badge-active" id="badge-chatgpt">active</span>
-  </div>
-  <div class="platform">
-    <span class="platform-name">Gemini</span>
-    <span class="badge badge-active" id="badge-gemini">active</span>
-  </div>
-</div>
-
-<p id="msg"></p>
 
 <script src="popup.js"></script>
 </body>
