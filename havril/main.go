@@ -11,6 +11,7 @@ import (
 	"github.com/freedisch/havril/internal/api/middleware"
 	"github.com/freedisch/havril/internal/embedding"
 	"github.com/freedisch/havril/internal/engine"
+	"github.com/freedisch/havril/internal/mcp"
 	"github.com/freedisch/havril/internal/memory"
 	"github.com/freedisch/havril/internal/store"
 	"github.com/freedisch/havril/internal/user"
@@ -125,6 +126,10 @@ func main() {
 		// models, memory routes will be mounted here
 
 	})
+
+	mcpServer := mcp.New(baseURL, memorySvc, userRepo)
+	r.Mount("/mcp", mcpServer.Handler())
+
 
 	log.Printf("havril listening on :%s", port)
 	if err := http.ListenAndServe(":"+port, r); err != nil {
