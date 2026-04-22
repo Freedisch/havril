@@ -38,7 +38,7 @@ func New(baseURL string, memorySvc memory.Service, userRepo *user.Repository) *S
 	s.registerFetchMemories()
 	s.registerSubmitConversation()
 
-	s.sse = server.NewSSEServer(s.mcp, server.WithBaseURL(baseURL), server.WithStaticBasePath("/mcp"), server.WithSSEContextFunc(s.authenticate))
+	s.sse = server.NewSSEServer(s.mcp, server.WithBaseURL(baseURL), server.WithSSEContextFunc(s.authenticate))
 
 	return s
 }

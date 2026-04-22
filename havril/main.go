@@ -127,7 +127,7 @@ func main() {
 
 	})
 
-	mcpServer := mcp.New(baseURL, memorySvc, userRepo)
+	mcpServer := mcp.New(baseURL+"/mcp", memorySvc, userRepo)
 	r.Mount("/mcp", mcpServer.Handler())
 
 
