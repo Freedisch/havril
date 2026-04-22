@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/freedisch/havril/internal/embedding"
-	"github.com/freedisch/havril/internal/store/vector"
+	"github.com/freedisch/havril/internal/store"
 	"github.com/google/uuid"
 )
 
@@ -13,11 +13,11 @@ const defaultDedupThreshold = 0.92
 
 type Deduplicator struct {
 	embedder embedding.Embedder
-	vectors  vector.Store
+	vectors  store.Store
 	thresold float32
 }
 
-func newDeduplicator(embedder embedding.Embedder, vector vector.Store, thresold float64) *Deduplicator {
+func newDeduplicator(embedder embedding.Embedder, vector store.Store, thresold float64) *Deduplicator {
 	if thresold == 0 {
 		thresold = defaultDedupThreshold
 	}

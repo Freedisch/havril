@@ -12,8 +12,7 @@ import (
 	"github.com/freedisch/havril/internal/embedding"
 	"github.com/freedisch/havril/internal/engine"
 	"github.com/freedisch/havril/internal/memory"
-	"github.com/freedisch/havril/internal/store/postgres"
-	"github.com/freedisch/havril/internal/store/vector"
+	"github.com/freedisch/havril/internal/store"
 	"github.com/freedisch/havril/internal/user"
 	"github.com/go-chi/chi/v5"
 	chimid "github.com/go-chi/chi/v5/middleware"
@@ -36,15 +35,15 @@ func main() {
 	baseURL := getEnv("APP_BASE_URL", "http://localhost:"+port)
 
 	// Database
-	db, err := postgres.NewDB(dsn)
+	db, err := store.NewDB(dsn)
 	if err != nil {
 		log.Fatalf("connect db: %v", err)
 	}
 
 	// OAuth session store (required by goth/gothic)
-	store := sessions.NewCookieStore([]byte(sessionSecret))
-	store.MaxAge(86400)
-	gothic.Store = store
+	cookie := sessions.NewCookieStore([]byte(sessionSecret))
+	cookie.MaxAge(86400)
+	gothic.Store = cookie
 
 	// Register OAuth providers based on available env vars
 	var providers []goth.Provider
@@ -79,11 +78,11 @@ func main() {
 	modelsHandler := handlers.NewModelsHandler(modelSvc)
 	qdrantHost := strings.TrimPrefix(strings.TrimPrefix(getEnv("QDRANT_HOST", "localhost:6334"), "https://"), "http://")
 	qdrantAPIKey := os.Getenv("QDRANT_API_KEY")
-	vectorStore, err := vector.New(qdrantHost, qdrantAPIKey)
+	vectorStore, err := store.New(qdrantHost, qdrantAPIKey)
 	if err != nil {
 		log.Fatalf("connect qdrant: %v", err)
 	}
-	if err := vector.EnsureCollection(context.Background(), qdrantHost, qdrantAPIKey); err != nil {
+	if err := store.EnsureCollection(context.Background(), qdrantHost, qdrantAPIKey); err != nil {
 		log.Fatalf("failed to ensure qdrant collection: %v", err)
 	}
 	embedder, err := embedding.New(embedding.Config{
