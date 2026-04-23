@@ -65,8 +65,11 @@ func (s *Server) registerFetchMemories(){
 s.mcp.AddTool(tool, s.handleFetchMemories)
 }
 
-func (s *Server) handleFetchMemories(ctx context.Context, req mcp.CallToolRequest)(*mcp.CallToolResult, error){
+func (s *Server) handleFetchMemories(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	userID := user.UserIDFromContext(ctx)
+	if userID == (uuid.UUID{}) {
+		return mcp.NewToolResultError("unauthorized: valid Bearer token required"), nil
+	}
 	query, err := req.RequireString("query")
 	if err != nil || query == "" {
 		return mcp.NewToolResultError("query is required"), nil
@@ -115,8 +118,11 @@ func extractBearerToken(r *http.Request) (string, error){
 	return header[len(prefix):], nil
 }
 
-func (s *Server) handleSubmitConversation(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error){
+func (s *Server) handleSubmitConversation(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	userID := user.UserIDFromContext(ctx)
+	if userID == (uuid.UUID{}) {
+		return mcp.NewToolResultError("unauthorized: valid Bearer token required"), nil
+	}
 
 	args := req.GetArguments()
 	rawConv, ok := args["conversation"]

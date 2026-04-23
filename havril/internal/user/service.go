@@ -69,9 +69,6 @@ func WithUserID(ctx context.Context, id uuid.UUID) context.Context {
 }
 
 func UserIDFromContext(ctx context.Context) uuid.UUID {
-	id, ok := ctx.Value(userIDKey).(uuid.UUID)
-	if !ok {
-		panic("userID not found in context — auth middleware missing")
-	}
+	id, _ := ctx.Value(userIDKey).(uuid.UUID)
 	return id
 }
