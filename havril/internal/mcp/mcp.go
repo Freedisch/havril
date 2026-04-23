@@ -65,6 +65,60 @@ func (s *Server) Handler() http.Handler {
 	return s.streamable
 }
 
+// MustAuth is an HTTP middleware that enforces authentication before any request
+// reaches the MCP library. It checks the session cache first (so tool calls work
+// even when the client omits the Authorization header after initialize), then
+// falls back to validating the Bearer token. Unauthenticated requests receive
+// HTTP 401, which causes MCP clients to trigger the OAuth flow and redirect the
+// user to /oauth/authorize to log in.
+func (s *Server) MustAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var userID uuid.UUID
+
+		// Re-use session authenticated during initialize.
+		if sid := r.Header.Get("Mcp-Session-Id"); sid != "" {
+			if uid, ok := s.sessions.Load(sid); ok {
+				userID = uid.(uuid.UUID)
+			}
+		}
+
+		// Fall back to Bearer token.
+		if userID == (uuid.UUID{}) {
+			token, err := extractBearerToken(r)
+			if err != nil {
+				writeUnauthorized(w)
+				return
+			}
+			sum := sha256.Sum256([]byte(token))
+			tokenHash := hex.EncodeToString(sum[:])
+			u, err := s.userRepo.GetByTokenHash(r.Context(), tokenHash)
+			if err != nil {
+				writeUnauthorized(w)
+				return
+			}
+			uid, err := uuid.Parse(u.ID)
+			if err != nil {
+				writeUnauthorized(w)
+				return
+			}
+			userID = uid
+			// Cache so subsequent requests in this session skip token validation.
+			if sid := r.Header.Get("Mcp-Session-Id"); sid != "" {
+				s.sessions.Store(sid, userID)
+			}
+		}
+
+		next.ServeHTTP(w, r.WithContext(user.WithUserID(r.Context(), userID)))
+	})
+}
+
+func writeUnauthorized(w http.ResponseWriter) {
+	w.Header().Set("WWW-Authenticate", `Bearer realm="havril",error="invalid_token",error_description="A valid Bearer token is required"`)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	w.Write([]byte(`{"error":"unauthorized","code":"bearer_token_required"}`)) //nolint:errcheck
+}
+
 func (s *Server) registerFetchMemories(){
 	tool := mcp.NewTool("fetch_memories", mcp.WithDescription(
 			"Retrieve memories relevant to the current conversation context. "+
@@ -201,6 +255,12 @@ func (s *Server) registerSubmitConversation(){
 // to validating the Bearer token directly. On success the userID is injected
 // into the context and, if a session ID is present, cached for future requests.
 func (s *Server) authenticate(ctx context.Context, r *http.Request) context.Context {
+	// MustAuth middleware already validated and injected the userID.
+	if uid := user.UserIDFromContext(ctx); uid != (uuid.UUID{}) {
+		return ctx
+	}
+
+	// Fallback: session cache (in case the middleware was bypassed).
 	if session := server.ClientSessionFromContext(ctx); session != nil {
 		if sid := session.SessionID(); sid != "" {
 			if uid, ok := s.sessions.Load(sid); ok {

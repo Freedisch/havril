@@ -35,12 +35,13 @@ func NewOAuthHandler(baseURL string, userRepo *user.Repository) *OAuthHandler {
 
 // Metadata handles GET /.well-known/oauth-authorization-server
 func (h *OAuthHandler) Metadata(w http.ResponseWriter, r *http.Request) {
+	base := requestBaseURL(r)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{ //nolint:errcheck
-		"issuer":                           h.baseURL,
-		"authorization_endpoint":           h.baseURL + "/oauth/authorize",
-		"token_endpoint":                   h.baseURL + "/oauth/token",
-		"registration_endpoint":            h.baseURL + "/oauth/register",
+		"issuer":                           base,
+		"authorization_endpoint":           base + "/oauth/authorize",
+		"token_endpoint":                   base + "/oauth/token",
+		"registration_endpoint":            base + "/oauth/register",
 		"response_types_supported":         []string{"code"},
 		"grant_types_supported":            []string{"authorization_code"},
 		"code_challenge_methods_supported": []string{"S256"},
@@ -50,11 +51,30 @@ func (h *OAuthHandler) Metadata(w http.ResponseWriter, r *http.Request) {
 // ProtectedResource handles GET /.well-known/oauth-protected-resource{/*}.
 // RFC 9728 — tells clients which authorization server protects this resource.
 func (h *OAuthHandler) ProtectedResource(w http.ResponseWriter, r *http.Request) {
+	base := requestBaseURL(r)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{ //nolint:errcheck
-		"resource":              h.baseURL,
-		"authorization_servers": []string{h.baseURL},
+		"resource":              base,
+		"authorization_servers": []string{base},
 	})
+}
+
+// requestBaseURL infers the public-facing base URL from the request so that
+// OAuth metadata is correct behind proxies and tunnels (e.g. Cloudflare).
+// Cloudflare sets X-Forwarded-Proto; the Host header carries the public hostname.
+func requestBaseURL(r *http.Request) string {
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	if p := r.Header.Get("X-Forwarded-Proto"); p != "" {
+		scheme = p
+	}
+	host := r.Host
+	if h := r.Header.Get("X-Forwarded-Host"); h != "" {
+		host = h
+	}
+	return scheme + "://" + host
 }
 
 // Register handles POST /oauth/register (RFC 7591 dynamic client registration).
@@ -109,7 +129,6 @@ func (h *OAuthHandler) autoAuthorize(w http.ResponseWriter, r *http.Request, raw
 		return
 	}
 
-	// Issue the auth code
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		http.Error(w, "server error", http.StatusInternalServerError)

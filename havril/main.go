@@ -113,7 +113,7 @@ func main() {
 	r.Get("/v1/auth/{provider}/callback", authHandler.Callback)
 	r.Get("/v1/auth/ext/done", authHandler.ExtDone)
 
-	// OAuth discovery stubs — required by MCP clients (e.g. Claude.ai) before
+	// OAuth discovery stubs — required by MCP clients before
 	// they will attempt a connection; access_denied from /authorize causes
 	// fallback to manual Bearer token entry.
 	r.Get("/.well-known/oauth-authorization-server", oauthHandler.Metadata)
@@ -124,7 +124,6 @@ func main() {
 	r.Post("/oauth/authorize", oauthHandler.Authorize)
 	r.Post("/oauth/token", oauthHandler.Token)
 
-	// Protected routes — expanded in Step 3+
 	r.Group(func(r chi.Router) {
 		r.Use(authMid.Authenticate)
 		r.Post("/v1/models/connect", modelsHandler.Connect)
@@ -135,12 +134,10 @@ func main() {
 		r.Post("/v1/memory/submit", memoryHandler.Submit)
 		r.Get("/v1/memory/fetch", memoryHandler.Fetch)
 
-		// models, memory routes will be mounted here
-
 	})
 
 	mcpSrv := mcp.New(memorySvc, userRepo)
-	mcpHandler := mcpSrv.Handler()
+	mcpHandler := mcpSrv.MustAuth(mcpSrv.Handler())
 	r.Method(http.MethodPost, "/mcp", mcpHandler)
 	r.Method(http.MethodGet, "/mcp", mcpHandler)
 	r.Method(http.MethodDelete, "/mcp", mcpHandler)
