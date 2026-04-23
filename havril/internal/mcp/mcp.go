@@ -6,7 +6,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"sync"
 
 	"github.com/freedisch/havril/internal/memory"
 	"github.com/freedisch/havril/internal/user"
@@ -15,11 +17,25 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
+
+// sessionIDManager generates proper session IDs for clients but accepts any value
+// (including empty) during validation, so both MCP-spec-compliant clients and
+// direct API callers work without a 404.
+type sessionIDManager struct{}
+
+func (m *sessionIDManager) Generate() string {
+	return "mcp-session-" + uuid.New().String()
+}
+
+func (m *sessionIDManager) Validate(_ string) (bool, error) { return false, nil }
+func (m *sessionIDManager) Terminate(_ string) (bool, error) { return false, nil }
+
 type Server struct {
 	mcp        *server.MCPServer
 	streamable *server.StreamableHTTPServer
 	memorySvc  memory.Service
 	userRepo   *user.Repository
+	sessions   sync.Map // sessionID → uuid.UUID: cache Bearer-auth across a session
 }
 
 func New(memorySvc memory.Service, userRepo *user.Repository) *Server {
@@ -39,7 +55,7 @@ func New(memorySvc memory.Service, userRepo *user.Repository) *Server {
 
 	s.streamable = server.NewStreamableHTTPServer(s.mcp,
 		server.WithHTTPContextFunc(s.authenticate),
-		server.WithStateLess(true),
+		server.WithSessionIdManager(&sessionIDManager{}),
 	)
 
 	return s
@@ -68,7 +84,7 @@ s.mcp.AddTool(tool, s.handleFetchMemories)
 func (s *Server) handleFetchMemories(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	userID := user.UserIDFromContext(ctx)
 	if userID == (uuid.UUID{}) {
-		return mcp.NewToolResultError("unauthorized: valid Bearer token required"), nil
+		return mcp.NewToolResultError("unauthorized: valid Bearer token required" + userID.String()), nil
 	}
 	query, err := req.RequireString("query")
 	if err != nil || query == "" {
@@ -180,28 +196,45 @@ func (s *Server) registerSubmitConversation(){
 	s.mcp.AddTool(tool, s.handleSubmitConversation)
 }
 
-// authenticate implements server.HTTPContextFunc. It validates the Bearer token
-// and injects the userID into the context; on failure the original ctx is returned
-// unchanged and UserIDFromContext will return a zero value in the handler.
+// authenticate implements server.HTTPContextFunc. It first tries to reuse a
+// previously-authenticated session (keyed by Mcp-Session-Id), then falls back
+// to validating the Bearer token directly. On success the userID is injected
+// into the context and, if a session ID is present, cached for future requests.
 func (s *Server) authenticate(ctx context.Context, r *http.Request) context.Context {
-	token, err := extractBearerToken(r)
-	if err != nil {
-		return ctx
+	if session := server.ClientSessionFromContext(ctx); session != nil {
+		if sid := session.SessionID(); sid != "" {
+			if uid, ok := s.sessions.Load(sid); ok {
+				return user.WithUserID(ctx, uid.(uuid.UUID))
+			}
+		}
 	}
 
+	token, err := extractBearerToken(r)
+	if err != nil {
+		log.Printf("authenticate: extract token: %v", err)
+		return ctx
+	}
 	sum := sha256.Sum256([]byte(token))
 	tokenHash := hex.EncodeToString(sum[:])
 
 	u, err := s.userRepo.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
+		log.Printf("authenticate: get user by token hash: %v", err)
 		return ctx
 	}
-
 	userID, err := uuid.Parse(u.ID)
 	if err != nil {
+		log.Printf("authenticate: parse user ID %q: %v", u.ID, err)
 		return ctx
 	}
 
+	if session := server.ClientSessionFromContext(ctx); session != nil {
+		if sid := session.SessionID(); sid != "" {
+			s.sessions.Store(sid, userID)
+		}
+	}
+
+	log.Printf("authenticate: user %s authenticated", userID)
 	return user.WithUserID(ctx, userID)
 }
 
