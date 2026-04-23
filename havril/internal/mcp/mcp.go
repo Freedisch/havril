@@ -15,18 +15,17 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
-type Server struct{
-	mcp *server.MCPServer
-	sse *server.SSEServer
-	memorySvc memory.Service
-	userRepo *user.Repository
+type Server struct {
+	mcp        *server.MCPServer
+	streamable *server.StreamableHTTPServer
+	memorySvc  memory.Service
+	userRepo   *user.Repository
 }
 
-
-func New(baseURL string, memorySvc memory.Service, userRepo *user.Repository) *Server {
+func New(memorySvc memory.Service, userRepo *user.Repository) *Server {
 	s := &Server{
 		memorySvc: memorySvc,
-		userRepo: userRepo,
+		userRepo:  userRepo,
 	}
 
 	s.mcp = server.NewMCPServer(
@@ -38,13 +37,16 @@ func New(baseURL string, memorySvc memory.Service, userRepo *user.Repository) *S
 	s.registerFetchMemories()
 	s.registerSubmitConversation()
 
-	s.sse = server.NewSSEServer(s.mcp, server.WithBaseURL(baseURL), server.WithSSEContextFunc(s.authenticate))
+	s.streamable = server.NewStreamableHTTPServer(s.mcp,
+		server.WithHTTPContextFunc(s.authenticate),
+		server.WithStateLess(true),
+	)
 
 	return s
 }
 
-func (s *Server) Handler () http.Handler{
-	return s.sse
+func (s *Server) Handler() http.Handler {
+	return s.streamable
 }
 
 func (s *Server) registerFetchMemories(){
@@ -172,9 +174,9 @@ func (s *Server) registerSubmitConversation(){
 	s.mcp.AddTool(tool, s.handleSubmitConversation)
 }
 
-// authenticate implements server.SSEContextFunc. It validates the Bearer token
+// authenticate implements server.HTTPContextFunc. It validates the Bearer token
 // and injects the userID into the context; on failure the original ctx is returned
-// unchanged and UserIDFromContext will panic in the handler.
+// unchanged and UserIDFromContext will return a zero value in the handler.
 func (s *Server) authenticate(ctx context.Context, r *http.Request) context.Context {
 	token, err := extractBearerToken(r)
 	if err != nil {

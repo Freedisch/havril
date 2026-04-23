@@ -73,6 +73,7 @@ func main() {
 	userRepo := user.NewRepository(db)
 	userSvc := user.NewService(userRepo)
 	authHandler := handlers.NewAuthHandler(userSvc)
+	oauthHandler := handlers.NewOAuthHandler(baseURL)
 	authMid := middleware.NewAuthMiddleware(userSvc)
 	modelRepo := user.NewModelRepository(db)
 	modelSvc := user.NewModelService(modelRepo)
@@ -112,6 +113,15 @@ func main() {
 	r.Get("/v1/auth/{provider}/callback", authHandler.Callback)
 	r.Get("/v1/auth/ext/done", authHandler.ExtDone)
 
+	// OAuth discovery stubs — required by MCP clients (e.g. Claude.ai) before
+	// they will attempt a connection; access_denied from /authorize causes
+	// fallback to manual Bearer token entry.
+	r.Get("/.well-known/oauth-authorization-server", oauthHandler.Metadata)
+	r.Get("/.well-known/oauth-protected-resource", oauthHandler.ProtectedResource)
+	r.Get("/.well-known/oauth-protected-resource/*", oauthHandler.ProtectedResource)
+	r.Post("/oauth/register", oauthHandler.Register)
+	r.Get("/oauth/authorize", oauthHandler.Authorize)
+
 	// Protected routes — expanded in Step 3+
 	r.Group(func(r chi.Router) {
 		r.Use(authMid.Authenticate)
@@ -127,8 +137,11 @@ func main() {
 
 	})
 
-	mcpServer := mcp.New(baseURL+"/mcp", memorySvc, userRepo)
-	r.Mount("/mcp", mcpServer.Handler())
+	mcpSrv := mcp.New(memorySvc, userRepo)
+	mcpHandler := mcpSrv.Handler()
+	r.Method(http.MethodPost, "/mcp", mcpHandler)
+	r.Method(http.MethodGet, "/mcp", mcpHandler)
+	r.Method(http.MethodDelete, "/mcp", mcpHandler)
 
 
 	log.Printf("havril listening on :%s", port)
