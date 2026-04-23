@@ -1,27 +1,42 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"html"
 	"net/http"
 	"net/url"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/freedisch/havril/internal/user"
 )
 
-// OAuthHandler serves the three discovery/stub endpoints that MCP clients
-// (e.g. Claude.ai) probe before connecting. We don't implement a real OAuth
-// flow — returning access_denied from /oauth/authorize causes the client to
-// fall back to prompting the user for a Bearer token directly.
 type OAuthHandler struct {
-	baseURL string
+	baseURL  string
+	userRepo *user.Repository
+	codes    sync.Map // string -> *codeEntry
 }
 
-func NewOAuthHandler(baseURL string) *OAuthHandler {
-	return &OAuthHandler{baseURL: baseURL}
+type codeEntry struct {
+	rawToken      string
+	codeChallenge string
+	expiresAt     time.Time
+}
+
+func NewOAuthHandler(baseURL string, userRepo *user.Repository) *OAuthHandler {
+	return &OAuthHandler{baseURL: baseURL, userRepo: userRepo}
 }
 
 // Metadata handles GET /.well-known/oauth-authorization-server
 func (h *OAuthHandler) Metadata(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{ 
+	json.NewEncoder(w).Encode(map[string]any{ //nolint:errcheck
 		"issuer":                           h.baseURL,
 		"authorization_endpoint":           h.baseURL + "/oauth/authorize",
 		"token_endpoint":                   h.baseURL + "/oauth/token",
@@ -32,8 +47,17 @@ func (h *OAuthHandler) Metadata(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ProtectedResource handles GET /.well-known/oauth-protected-resource{/*}.
+// RFC 9728 — tells clients which authorization server protects this resource.
+func (h *OAuthHandler) ProtectedResource(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{ //nolint:errcheck
+		"resource":              h.baseURL,
+		"authorization_servers": []string{h.baseURL},
+	})
+}
+
 // Register handles POST /oauth/register (RFC 7591 dynamic client registration).
-// Returns a static client_id — no secrets stored.
 func (h *OAuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		RedirectURIs []string `json:"redirect_uris"`
@@ -52,33 +76,212 @@ func (h *OAuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ProtectedResource handles GET /.well-known/oauth-protected-resource{/*}.
-// RFC 9728 — tells clients which authorization server protects this resource.
-func (h *OAuthHandler) ProtectedResource(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{ //nolint:errcheck
-		"resource":              h.baseURL,
-		"authorization_servers": []string{h.baseURL},
-	})
+// Authorize handles GET /oauth/authorize (show form) and POST /oauth/authorize (submit).
+// If a valid havril_session cookie is present (set when the user logged in via the
+// extension), the authorization is completed silently with no user interaction.
+func (h *OAuthHandler) Authorize(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		h.authorizeSubmit(w, r)
+		return
+	}
+	if cookie, err := r.Cookie("havril_session"); err == nil && cookie.Value != "" {
+		h.autoAuthorize(w, r, cookie.Value)
+		return
+	}
+	h.authorizeForm(w, r)
 }
 
-// Authorize handles GET /oauth/authorize.
-// Returning access_denied causes MCP clients to fall back to manual Bearer
-// token entry — which is the auth model Havril uses.
-func (h *OAuthHandler) Authorize(w http.ResponseWriter, r *http.Request) {
-	redirectURI := r.URL.Query().Get("redirect_uri")
-	state := r.URL.Query().Get("state")
-
+func (h *OAuthHandler) autoAuthorize(w http.ResponseWriter, r *http.Request, rawToken string) {
+	q := r.URL.Query()
+	redirectURI := q.Get("redirect_uri")
 	if redirectURI == "" {
-		http.Error(w, `{"error":"invalid_request","error_description":"missing redirect_uri"}`, http.StatusBadRequest)
+		h.authorizeForm(w, r)
 		return
 	}
 
-	target := redirectURI +
-		"?error=access_denied" +
-		"&error_description=" + url.QueryEscape("Havril uses Bearer token auth — paste your havril_ token when prompted")
+	// Validate the session token
+	sum := sha256.Sum256([]byte(rawToken))
+	tokenHash := hex.EncodeToString(sum[:])
+	if _, err := h.userRepo.GetByTokenHash(r.Context(), tokenHash); err != nil {
+		// Stale or invalid session — clear it and fall back to the form
+		http.SetCookie(w, &http.Cookie{Name: "havril_session", Value: "", MaxAge: -1, Path: "/"})
+		h.authorizeForm(w, r)
+		return
+	}
+
+	// Issue the auth code
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		http.Error(w, "server error", http.StatusInternalServerError)
+		return
+	}
+	code := base64.RawURLEncoding.EncodeToString(b)
+	h.codes.Store(code, &codeEntry{
+		rawToken:      rawToken,
+		codeChallenge: q.Get("code_challenge"),
+		expiresAt:     time.Now().Add(10 * time.Minute),
+	})
+
+	target := redirectURI + "?code=" + url.QueryEscape(code)
+	if state := q.Get("state"); state != "" {
+		target += "&state=" + url.QueryEscape(state)
+	}
+	http.Redirect(w, r, target, http.StatusFound)
+}
+
+func (h *OAuthHandler) authorizeForm(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	redirectURI := q.Get("redirect_uri")
+	if redirectURI == "" {
+		http.Error(w, "missing redirect_uri", http.StatusBadRequest)
+		return
+	}
+
+	esc := html.EscapeString
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, `<!DOCTYPE html>
+<html>
+<head>
+  <title>Havril — Authorize MCP Access</title>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:system-ui,sans-serif;max-width:460px;margin:80px auto;padding:0 20px;color:#111}
+    h2{margin-bottom:4px}
+    p{color:#555;margin-top:4px}
+    input[type=text]{width:100%%;padding:10px;margin:14px 0 6px;font-family:monospace;font-size:14px;border:1px solid #ccc;border-radius:4px}
+    button{padding:10px 28px;background:#111;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px}
+    button:hover{background:#333}
+    .hint{font-size:12px;color:#888;margin-bottom:16px}
+  </style>
+</head>
+<body>
+  <h2>Authorize Claude</h2>
+  <p>Paste your Havril Bearer token to grant Claude access to your memories.</p>
+  <form method="POST" action="/oauth/authorize">
+    <input type="hidden" name="redirect_uri"           value="%s">
+    <input type="hidden" name="state"                  value="%s">
+    <input type="hidden" name="code_challenge"         value="%s">
+    <input type="hidden" name="code_challenge_method"  value="%s">
+    <input type="hidden" name="client_id"              value="%s">
+    <input type="text" name="token" placeholder="havril_xxxxxxxxxxxxxxxxxxxx" autofocus>
+    <p class="hint">Find your token in the Havril dashboard under API Keys.</p>
+    <button type="submit">Authorize</button>
+  </form>
+</body>
+</html>`,
+		esc(redirectURI),
+		esc(q.Get("state")),
+		esc(q.Get("code_challenge")),
+		esc(q.Get("code_challenge_method")),
+		esc(q.Get("client_id")),
+	)
+}
+
+func (h *OAuthHandler) authorizeSubmit(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	redirectURI := r.FormValue("redirect_uri")
+	state := r.FormValue("state")
+	codeChallenge := r.FormValue("code_challenge")
+	rawToken := strings.TrimSpace(r.FormValue("token"))
+
+	if redirectURI == "" || rawToken == "" {
+		http.Error(w, "missing redirect_uri or token", http.StatusBadRequest)
+		return
+	}
+
+	// Validate the token against the database
+	sum := sha256.Sum256([]byte(rawToken))
+	tokenHash := hex.EncodeToString(sum[:])
+	if _, err := h.userRepo.GetByTokenHash(r.Context(), tokenHash); err != nil {
+		// Re-show form with error message
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprintf(w, `<!DOCTYPE html><html><head><title>Havril</title></head><body>
+<p style="color:red">Invalid token. Please check and try again.</p>
+<a href="javascript:history.back()">Go back</a>
+</body></html>`)
+		return
+	}
+
+	// Generate a short-lived authorization code
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		http.Error(w, "server error", http.StatusInternalServerError)
+		return
+	}
+	code := base64.RawURLEncoding.EncodeToString(b)
+
+	h.codes.Store(code, &codeEntry{
+		rawToken:      rawToken,
+		codeChallenge: codeChallenge,
+		expiresAt:     time.Now().Add(10 * time.Minute),
+	})
+
+	target := redirectURI + "?code=" + url.QueryEscape(code)
 	if state != "" {
 		target += "&state=" + url.QueryEscape(state)
 	}
 	http.Redirect(w, r, target, http.StatusFound)
+}
+
+// Token handles POST /oauth/token — exchanges an authorization code for a Bearer token.
+func (h *OAuthHandler) Token(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		h.tokenError(w, "invalid_request", http.StatusBadRequest)
+		return
+	}
+
+	if r.FormValue("grant_type") != "authorization_code" {
+		h.tokenError(w, "unsupported_grant_type", http.StatusBadRequest)
+		return
+	}
+
+	code := r.FormValue("code")
+	entryI, ok := h.codes.LoadAndDelete(code)
+	if !ok {
+		h.tokenError(w, "invalid_grant", http.StatusBadRequest)
+		return
+	}
+
+	entry := entryI.(*codeEntry)
+	if time.Now().After(entry.expiresAt) {
+		h.tokenError(w, "invalid_grant", http.StatusBadRequest)
+		return
+	}
+
+	// Verify PKCE (S256) if a challenge was stored
+	if entry.codeChallenge != "" {
+		verifier := r.FormValue("code_verifier")
+		if !verifyS256(verifier, entry.codeChallenge) {
+			h.tokenError(w, "invalid_grant", http.StatusBadRequest)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	json.NewEncoder(w).Encode(map[string]any{ //nolint:errcheck
+		"access_token": entry.rawToken,
+		"token_type":   "bearer",
+		"expires_in":   315360000, // 10 years — Havril tokens don't expire
+	})
+}
+
+func (h *OAuthHandler) tokenError(w http.ResponseWriter, code string, status int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(map[string]string{"error": code}) //nolint:errcheck
+}
+
+// verifyS256 checks that sha256(verifier) base64url-encodes to challenge.
+func verifyS256(verifier, challenge string) bool {
+	if verifier == "" {
+		return false
+	}
+	h := sha256.Sum256([]byte(verifier))
+	return base64.RawURLEncoding.EncodeToString(h[:]) == challenge
 }

@@ -73,7 +73,7 @@ func main() {
 	userRepo := user.NewRepository(db)
 	userSvc := user.NewService(userRepo)
 	authHandler := handlers.NewAuthHandler(userSvc)
-	oauthHandler := handlers.NewOAuthHandler(baseURL)
+	oauthHandler := handlers.NewOAuthHandler(baseURL, userRepo)
 	authMid := middleware.NewAuthMiddleware(userSvc)
 	modelRepo := user.NewModelRepository(db)
 	modelSvc := user.NewModelService(modelRepo)
@@ -121,6 +121,8 @@ func main() {
 	r.Get("/.well-known/oauth-protected-resource/*", oauthHandler.ProtectedResource)
 	r.Post("/oauth/register", oauthHandler.Register)
 	r.Get("/oauth/authorize", oauthHandler.Authorize)
+	r.Post("/oauth/authorize", oauthHandler.Authorize)
+	r.Post("/oauth/token", oauthHandler.Token)
 
 	// Protected routes — expanded in Step 3+
 	r.Group(func(r chi.Router) {
