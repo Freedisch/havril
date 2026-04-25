@@ -53,7 +53,7 @@ func (h *OAuthHandler) Metadata(w http.ResponseWriter, r *http.Request) {
 func (h *OAuthHandler) ProtectedResource(w http.ResponseWriter, r *http.Request) {
 	base := requestBaseURL(r)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{ //nolint:errcheck
+	json.NewEncoder(w).Encode(map[string]any{
 		"resource":              base,
 		"authorization_servers": []string{base},
 	})
@@ -82,11 +82,11 @@ func (h *OAuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		RedirectURIs []string `json:"redirect_uris"`
 	}
-	json.NewDecoder(r.Body).Decode(&req) //nolint:errcheck
+	json.NewDecoder(r.Body).Decode(&req)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]any{ //nolint:errcheck
+	json.NewEncoder(w).Encode(map[string]any{
 		"client_id":                  "havril-mcp",
 		"client_secret_expires_at":   0,
 		"redirect_uris":              req.RedirectURIs,
@@ -119,33 +119,16 @@ func (h *OAuthHandler) autoAuthorize(w http.ResponseWriter, r *http.Request, raw
 		return
 	}
 
-	// Validate the session token
-	sum := sha256.Sum256([]byte(rawToken))
-	tokenHash := hex.EncodeToString(sum[:])
-	if _, err := h.userRepo.GetByTokenHash(r.Context(), tokenHash); err != nil {
+	if !h.tokenValid(r, rawToken) {
 		// Stale or invalid session — clear it and fall back to the form
 		http.SetCookie(w, &http.Cookie{Name: "havril_session", Value: "", MaxAge: -1, Path: "/"})
 		h.authorizeForm(w, r)
 		return
 	}
 
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
+	if err := h.issueCode(w, r, rawToken, redirectURI, q.Get("state"), q.Get("code_challenge")); err != nil {
 		http.Error(w, "server error", http.StatusInternalServerError)
-		return
 	}
-	code := base64.RawURLEncoding.EncodeToString(b)
-	h.codes.Store(code, &codeEntry{
-		rawToken:      rawToken,
-		codeChallenge: q.Get("code_challenge"),
-		expiresAt:     time.Now().Add(10 * time.Minute),
-	})
-
-	target := redirectURI + "?code=" + url.QueryEscape(code)
-	if state := q.Get("state"); state != "" {
-		target += "&state=" + url.QueryEscape(state)
-	}
-	http.Redirect(w, r, target, http.StatusFound)
 }
 
 func (h *OAuthHandler) authorizeForm(w http.ResponseWriter, r *http.Request) {
@@ -212,11 +195,7 @@ func (h *OAuthHandler) authorizeSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate the token against the database
-	sum := sha256.Sum256([]byte(rawToken))
-	tokenHash := hex.EncodeToString(sum[:])
-	if _, err := h.userRepo.GetByTokenHash(r.Context(), tokenHash); err != nil {
-		// Re-show form with error message
+	if !h.tokenValid(r, rawToken) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusUnauthorized)
 		fmt.Fprintf(w, `<!DOCTYPE html><html><head><title>Havril</title></head><body>
@@ -226,25 +205,9 @@ func (h *OAuthHandler) authorizeSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate a short-lived authorization code
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
+	if err := h.issueCode(w, r, rawToken, redirectURI, state, codeChallenge); err != nil {
 		http.Error(w, "server error", http.StatusInternalServerError)
-		return
 	}
-	code := base64.RawURLEncoding.EncodeToString(b)
-
-	h.codes.Store(code, &codeEntry{
-		rawToken:      rawToken,
-		codeChallenge: codeChallenge,
-		expiresAt:     time.Now().Add(10 * time.Minute),
-	})
-
-	target := redirectURI + "?code=" + url.QueryEscape(code)
-	if state != "" {
-		target += "&state=" + url.QueryEscape(state)
-	}
-	http.Redirect(w, r, target, http.StatusFound)
 }
 
 // Token handles POST /oauth/token — exchanges an authorization code for a Bearer token.
@@ -283,17 +246,46 @@ func (h *OAuthHandler) Token(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
-	json.NewEncoder(w).Encode(map[string]any{ //nolint:errcheck
+	json.NewEncoder(w).Encode(map[string]any{
 		"access_token": entry.rawToken,
 		"token_type":   "bearer",
-		"expires_in":   315360000, // 10 years — Havril tokens don't expire
+		"expires_in":   315360000,
 	})
 }
 
 func (h *OAuthHandler) tokenError(w http.ResponseWriter, code string, status int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"error": code}) //nolint:errcheck
+	json.NewEncoder(w).Encode(map[string]string{"error": code}) 
+}
+
+// tokenValid returns true if rawToken hashes to a known user in the database.
+func (h *OAuthHandler) tokenValid(r *http.Request, rawToken string) bool {
+	sum := sha256.Sum256([]byte(rawToken))
+	tokenHash := hex.EncodeToString(sum[:])
+	_, err := h.userRepo.GetByTokenHash(r.Context(), tokenHash)
+	return err == nil
+}
+
+// issueCode generates a short-lived auth code, stores it, and redirects the
+// client to redirectURI with the code (and optional state) appended.
+func (h *OAuthHandler) issueCode(w http.ResponseWriter, r *http.Request, rawToken, redirectURI, state, codeChallenge string) error {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return err
+	}
+	code := base64.RawURLEncoding.EncodeToString(b)
+	h.codes.Store(code, &codeEntry{
+		rawToken:      rawToken,
+		codeChallenge: codeChallenge,
+		expiresAt:     time.Now().Add(10 * time.Minute),
+	})
+	target := redirectURI + "?code=" + url.QueryEscape(code)
+	if state != "" {
+		target += "&state=" + url.QueryEscape(state)
+	}
+	http.Redirect(w, r, target, http.StatusFound)
+	return nil
 }
 
 // verifyS256 checks that sha256(verifier) base64url-encodes to challenge.

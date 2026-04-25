@@ -58,19 +58,23 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	if c, _ := r.Cookie("havril_ext"); c != nil && c.Value == "1" {
 		http.SetCookie(w, &http.Cookie{Name: "havril_ext", Value: "", MaxAge: -1, Path: "/"})
-		http.SetCookie(w, &http.Cookie{
-			Name:     "havril_session",
-			Value:    rawToken,
-			Path:     "/",
-			MaxAge:   365 * 24 * 60 * 60,
-			HttpOnly: true,
-			SameSite: http.SameSiteLaxMode,
-		})
 		q := url.Values{}
-		q.Set("token", rawToken)
 		q.Set("name", user.DisplayName)
 		q.Set("email", user.Email)
 		q.Set("avatar", user.AvatarURL)
+		if rawToken != "" {
+			// New user — persist session cookie and pass raw token to extension.
+			http.SetCookie(w, &http.Cookie{
+				Name:     "havril_session",
+				Value:    rawToken,
+				Path:     "/",
+				MaxAge:   365 * 24 * 60 * 60,
+				HttpOnly: true,
+				SameSite: http.SameSiteLaxMode,
+			})
+			q.Set("token", rawToken)
+		}
+		// Returning user: no token param — background.js will update profile only.
 		http.Redirect(w, r, "/v1/auth/ext/done?"+q.Encode(), http.StatusFound)
 		return
 	}
