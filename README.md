@@ -1,6 +1,11 @@
 # Havril
 
-The memory layer for every AI model. **[Learn more »](https://tryavril.ai)** · [Discord](#) · [Website](#) · [Issues](#)
+The memory layer for every AI model. **[Learn more »](https://tryavril.ai)** · [Website](#) · [Issues](github/freedisch/havril/issues)
+
+
+https://github.com/user-attachments/assets/dfc048fb-e853-483a-8aeb-98dc52b8863a
+
+
 
 ## About the Project
 
