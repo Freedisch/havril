@@ -15,6 +15,7 @@ import (
 	"github.com/freedisch/havril/internal/memory"
 	"github.com/freedisch/havril/internal/store"
 	"github.com/freedisch/havril/internal/user"
+	"github.com/freedisch/havril/pkg/utils"
 	"github.com/go-chi/chi/v5"
 	chimid "github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/sessions"
@@ -30,12 +31,11 @@ func main() {
 		log.Println("no .env file found, reading from environment")
 	}
 
-	port := getEnv("PORT", "8080")
-	dsn := mustEnv("DATABASE_URL")
-	sessionSecret := getEnv("SESSION_SECRET", "change-me-in-production")
-	baseURL := getEnv("APP_BASE_URL", "http://localhost:"+port)
+	port := utils.GetEnv("PORT", "8080")
+	dsn := utils.MustEnv("DATABASE_URL")
+	sessionSecret := utils.GetEnv("SESSION_SECRET", "change-me-in-production")
+	baseURL := utils.GetEnv("APP_BASE_URL", "http://localhost:"+port)
 
-	// Database
 	db, err := store.NewDB(dsn)
 	if err != nil {
 		log.Fatalf("connect db: %v", err)
@@ -51,7 +51,7 @@ func main() {
 	if id := os.Getenv("GOOGLE_CLIENT_ID"); id != "" {
 		providers = append(providers, google.New(
 			id,
-			mustEnv("GOOGLE_CLIENT_SECRET"),
+			utils.MustEnv("GOOGLE_CLIENT_SECRET"),
 			baseURL+"/v1/auth/google/callback",
 			"email", "profile",
 		))
@@ -59,7 +59,7 @@ func main() {
 	if id := os.Getenv("GITHUB_CLIENT_ID"); id != "" {
 		providers = append(providers, github.New(
 			id,
-			mustEnv("GITHUB_CLIENT_SECRET"),
+			utils.MustEnv("GITHUB_CLIENT_SECRET"),
 			baseURL+"/v1/auth/github/callback",
 			"user:email",
 		))
@@ -78,7 +78,7 @@ func main() {
 	modelRepo := user.NewModelRepository(db)
 	modelSvc := user.NewModelService(modelRepo)
 	modelsHandler := handlers.NewModelsHandler(modelSvc)
-	qdrantHost := strings.TrimPrefix(strings.TrimPrefix(getEnv("QDRANT_HOST", "localhost:6334"), "https://"), "http://")
+	qdrantHost := strings.TrimPrefix(strings.TrimPrefix(utils.GetEnv("QDRANT_HOST", "localhost:6334"), "https://"), "http://")
 	qdrantAPIKey := os.Getenv("QDRANT_API_KEY")
 	vectorStore, err := store.New(qdrantHost, qdrantAPIKey)
 	if err != nil {
@@ -88,21 +88,20 @@ func main() {
 		log.Fatalf("failed to ensure qdrant collection: %v", err)
 	}
 	embedder, err := embedding.New(embedding.Config{
-		Provider: getEnv("EMBEDDING_PROVIDER", "openai"),
-		APIKey:   mustEnv("OPENAI_API_KEY"),
-		Model:    getEnv("EMBEDDING_MODEL", "text-embedding-3-small"),
+		Provider: utils.GetEnv("EMBEDDING_PROVIDER", "openai"),
+		APIKey:   utils.MustEnv("OPENAI_API_KEY"),
+		Model:    utils.GetEnv("EMBEDDING_MODEL", "text-embedding-3-small"),
 	})
 	if err != nil {
 		log.Fatalf("init embedder: %v", err)
 	}
 	memoryRepo := memory.NewRepository(db, vectorStore, embedder)
 	eng := engine.New(engine.Config{
-		OpenAIAPIKey: mustEnv("OPENAI_API_KEY"),
+		OpenAIAPIKey: utils.MustEnv("OPENAI_API_KEY"),
 	}, embedder, vectorStore, memoryRepo)
 	memorySvc := memory.NewService(memoryRepo, eng)
 	memoryHandler := handlers.NewMemoryHandler(memorySvc)
 
-	// Router
 	r := chi.NewRouter()
 	r.Use(chimid.Logger)
 	r.Use(chimid.Recoverer)
@@ -151,20 +150,6 @@ func main() {
 
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok"}`)) //nolint:errcheck
+	w.Write([]byte(`{"status":"ok"}`)) 
 }
 
-func getEnv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
-}
-
-func mustEnv(key string) string {
-	v := os.Getenv(key)
-	if v == "" {
-		log.Fatalf("required env var %s is not set", key)
-	}
-	return v
-}
