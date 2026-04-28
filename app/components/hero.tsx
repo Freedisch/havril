@@ -49,10 +49,10 @@ export const Hero: FC = () => {
           Get early access
         </a>
         <a
-          href="#how-it-works"
+          href="#integrations"
           className="text-[12px] tracking-widest uppercase text-fog hover:text-mist transition-colors"
         >
-          See how it works
+          See it in action
         </a>
       </div>
 
