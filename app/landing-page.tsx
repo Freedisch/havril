@@ -1,15 +1,15 @@
 'use client';
 
 import { Nav } from './components/nav';
-import { CodePreview } from './components/codePreview';
-import { CTA } from './components/cta';
+import { Hero } from './components/hero';
+import { Ticker } from './components/ticker';
+import { HowItWorks } from './components/howItsWorks';
 import { EngineSection } from './components/engineSection';
 import { Features } from './components/features';
-import { Footer } from './components/footer';
-import { Hero } from './components/hero';
-import { HowItWorks } from './components/howItsWorks';
+import { CodePreview } from './components/codePreview';
 import { Integrations } from './components/integrations';
-import { Ticker } from './components/ticker';
+import { CTA } from './components/cta';
+import { Footer } from './components/footer';
 
 export default function Page(): JSX.Element {
   return (

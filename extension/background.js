@@ -1,8 +1,6 @@
 // Handles all network requests to the havril API so content scripts
 // never need CORS permissions directly.
 
-// ── API helpers ───────────────────────────────────────────────────────────────
-
 async function getConfig() {
   return new Promise((resolve) => {
     chrome.storage.sync.get(['token', 'serverUrl'], (result) => {
@@ -22,7 +20,7 @@ async function apiFetch(path, options = {}) {
 
   if (!token) {
     throw new Error(
-      'MemoAI token not set — open the extension popup to configure it',
+      'Havril token not set — open the extension popup to configure it',
     );
   }
 
@@ -42,8 +40,6 @@ async function apiFetch(path, options = {}) {
 
   return response.json();
 }
-
-// ── Core operations ───────────────────────────────────────────────────────────
 
 async function fetchMemories(query, limit = 5) {
   const params = new URLSearchParams({ q: query, limit: String(limit) });
@@ -69,13 +65,18 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
   const url = new URL(tab.url);
   const token = url.searchParams.get('token');
-  if (!token) return;
-
   const userName = url.searchParams.get('name') || '';
   const userEmail = url.searchParams.get('email') || '';
   const userAvatar = url.searchParams.get('avatar') || '';
 
-  await chrome.storage.sync.set({ token, userName, userEmail, userAvatar });
+  if (token) {
+    // New user — store the token along with profile info.
+    await chrome.storage.sync.set({ token, userName, userEmail, userAvatar });
+  } else if (userName || userEmail) {
+    // Returning user — keep the existing token, only refresh profile.
+    await chrome.storage.sync.set({ userName, userEmail, userAvatar });
+  }
+
   await chrome.storage.session.remove(['authTabId']);
   chrome.tabs.remove(tabId);
 
@@ -102,6 +103,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       case 'SUBMIT_CONVERSATION': {
         const { conversation, sourceModel } = message.payload;
         return submitConversation(conversation, sourceModel);
+      }
+      case 'LIST_MEMORIES': {
+        return apiFetch('/v1/memory');
       }
       case 'GET_CONFIG': {
         return getConfig();

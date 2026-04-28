@@ -1,4 +1,4 @@
-// content/gemini.js — MemoAI content script for gemini.google.com
+// content/gemini.js — Havril content script for gemini.google.com
 
 const SOURCE_MODEL = 'gemini';
 
@@ -59,7 +59,7 @@ async function loadMemories() {
       showMemoriesPanel(result.memories);
     }
   } catch (err) {
-    console.debug('[MemoAI] fetch skipped:', err.message);
+    console.debug('[Havril] fetch skipped:', err.message);
   }
 }
 
@@ -84,9 +84,8 @@ async function submitConversation() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 function init() {
-  injectSubmitButton(submitConversation);
+  injectMemoryPickerButton(getGeminiInput, submitConversation);
   loadMemories();
-  const query = document.title || 'general context';
   watchInputAndInject(getGeminiInput);
 }
 
@@ -98,4 +97,5 @@ new MutationObserver(() => {
   }
 }).observe(document.body, { childList: true, subtree: true });
 
-setTimeout(init, 2000); // Gemini loads slightly slower
+setTimeout(init, 2000);
+// Gemini loads slightly slower

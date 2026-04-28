@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/freedisch/havril/internal/embedding"
-	"github.com/freedisch/havril/internal/store/vector"
+	"github.com/freedisch/havril/internal/store"
 	"github.com/freedisch/havril/pkg/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -17,11 +17,11 @@ var ErrNotFound = errors.New("Memory not found")
 
 type Repository struct {
 	db         *gorm.DB
-	vectors    vector.Store
+	vectors    store.Store
 	embeddings embedding.Embedder
 }
 
-func NewRepository(db *gorm.DB, vectors vector.Store, embeddings embedding.Embedder) *Repository {
+func NewRepository(db *gorm.DB, vectors store.Store, embeddings embedding.Embedder) *Repository {
 	return &Repository{db: db, vectors: vectors, embeddings: embeddings}
 }
 

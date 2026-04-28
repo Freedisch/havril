@@ -25,6 +25,12 @@ func (s *Service) HandleOAuthCallback(ctx context.Context, provider, oauthID, em
 		return nil, "", err
 	}
 
+	// If the user already has a token, don't regenerate — existing integrations
+	// (MCP config, browser extension) would break if we overwrote the hash.
+	if user.TokenHash != "" {
+		return user, "", nil
+	}
+
 	rawToken, tokenHash, tokenPrefix, err := generateToken()
 	if err != nil {
 		return nil, "", fmt.Errorf("generate token: %w", err)
@@ -69,9 +75,6 @@ func WithUserID(ctx context.Context, id uuid.UUID) context.Context {
 }
 
 func UserIDFromContext(ctx context.Context) uuid.UUID {
-	id, ok := ctx.Value(userIDKey).(uuid.UUID)
-	if !ok {
-		panic("userID not found in context — auth middleware missing")
-	}
+	id, _ := ctx.Value(userIDKey).(uuid.UUID)
 	return id
 }
