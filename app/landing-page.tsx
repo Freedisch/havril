@@ -18,7 +18,6 @@ export default function Page(): JSX.Element {
         <Hero />
         <Integrations />
         <Features />
-
         <CTA />
       </main>
       <Footer />

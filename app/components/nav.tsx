@@ -6,8 +6,6 @@ export const Nav: FC = () => {
   const scrolled = useScrolled();
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
-  const links = ['How it works', 'Features', 'Integrations'];
-
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-5 transition-all duration-300 ${
@@ -18,18 +16,6 @@ export const Nav: FC = () => {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/havril.png" alt="Havril" style={{ height: '44px', width: 'auto' }} />
       </a>
-
-      <div className="hidden md:flex items-center gap-10 text-[11px] tracking-widest uppercase font-body font-light text-mist">
-        {links.map((l) => (
-          <a
-            key={l}
-            href={`#${l.toLowerCase().replace(/ /g, '-')}`}
-            className="hover:text-cream transition-colors duration-200"
-          >
-            {l}
-          </a>
-        ))}
-      </div>
 
       <div className="hidden md:flex items-center gap-4">
         <a
@@ -79,16 +65,24 @@ export const Nav: FC = () => {
 
       {menuOpen && (
         <div className="absolute top-full left-0 right-0 bg-ink border-b border-edge p-8 flex flex-col gap-6 md:hidden">
-          {links.map((l) => (
-            <a
-              key={l}
-              href={`#${l.toLowerCase().replace(/ /g, '-')}`}
-              className="text-[11px] tracking-widest uppercase text-mist hover:text-cream transition-colors"
-              onClick={() => setMenuOpen(false)}
-            >
-              {l}
-            </a>
-          ))}
+          <a
+            href="https://github.com/freedisch/havril"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] tracking-widest uppercase text-mist hover:text-cream transition-colors"
+            onClick={() => setMenuOpen(false)}
+          >
+            GitHub
+          </a>
+          <a
+            href="https://x.com/freedisch"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] tracking-widest uppercase text-mist hover:text-cream transition-colors"
+            onClick={() => setMenuOpen(false)}
+          >
+            X / Twitter
+          </a>
           <a href="#get-access" className="text-[11px] uppercase bg-amber text-white px-5 py-3 font-medium text-center rounded-sm">
             Get Early Access
           </a>
