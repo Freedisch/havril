@@ -21,7 +21,6 @@ export default function Page(): JSX.Element {
         <HowItWorks />
         <EngineSection />
         <Features />
-        <CodePreview />
         <Integrations />
         <CTA />
       </main>
