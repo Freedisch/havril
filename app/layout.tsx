@@ -46,6 +46,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${displayFont.variable} ${monoFont.variable} ${bodyFont.variable}`}
+      suppressHydrationWarning
     >
       <body className="bg-ink text-cream font-body antialiased overflow-x-hidden">
         {children}

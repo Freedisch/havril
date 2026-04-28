@@ -10,6 +10,8 @@ import { CodePreview } from './components/codePreview';
 import { Integrations } from './components/integrations';
 import { CTA } from './components/cta';
 import { Footer } from './components/footer';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from '@vercel/analytics/next';
 
 export default function Page(): JSX.Element {
   return (
@@ -24,6 +26,8 @@ export default function Page(): JSX.Element {
         <CTA />
       </main>
       <Footer />
+      <SpeedInsights />
+      <Analytics />
     </>
   );
 }
