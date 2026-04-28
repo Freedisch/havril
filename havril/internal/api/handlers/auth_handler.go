@@ -58,6 +58,16 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	// Extension flow: redirect to a page the extension can detect.
 	if c, _ := r.Cookie("havril_ext"); c != nil && c.Value == "1" {
 		http.SetCookie(w, &http.Cookie{Name: "havril_ext", Value: "", MaxAge: -1, Path: "/"})
+		// Persist a session cookie so /oauth/authorize can auto-approve
+		// the next time Claude.ai opens that page in this browser.
+		http.SetCookie(w, &http.Cookie{
+			Name:     "havril_session",
+			Value:    rawToken,
+			Path:     "/",
+			MaxAge:   365 * 24 * 60 * 60,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		})
 		q := url.Values{}
 		q.Set("token", rawToken)
 		q.Set("name", user.DisplayName)

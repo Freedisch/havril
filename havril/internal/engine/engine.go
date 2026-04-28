@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/freedisch/havril/internal/embedding"
-	"github.com/freedisch/havril/internal/store/vector"
+	"github.com/freedisch/havril/internal/store"
 	"github.com/freedisch/havril/pkg/models"
 	"github.com/google/uuid"
 )
@@ -34,7 +34,7 @@ type Engine struct {
 	contradictHi float32
 }
 
-func New(cfg Config, embedder embedding.Embedder, vectors vector.Store, repo memoryWriter) *Engine {
+func New(cfg Config, embedder embedding.Embedder, vectors store.Store, repo memoryWriter) *Engine {
 	if cfg.ContradictLower == 0{
 		cfg.ContradictLower = 0.75
 	}
