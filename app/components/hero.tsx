@@ -49,7 +49,7 @@ export const Hero: FC = () => {
           Get early access
         </a>
         <a
-          href="#how-it-works"
+          href="#"
           className="text-[12px] tracking-widest uppercase text-fog hover:text-mist transition-colors"
         >
           See how it works
@@ -81,9 +81,9 @@ const HubDiagram: FC = () => {
   const [activeModel, setActiveModel] = useState(0);
 
   const models = [
-    { label: 'Claude',  icon: '✦', cx: 60  },
+    { label: 'Claude', icon: '✦', cx: 60 },
     { label: 'ChatGPT', icon: '◎', cx: 180 },
-    { label: 'Gemini',  icon: '◈', cx: 300 },
+    { label: 'Gemini', icon: '◈', cx: 300 },
     { label: 'Mistral', icon: '◇', cx: 420 },
   ];
 
@@ -92,18 +92,28 @@ const HubDiagram: FC = () => {
   const modelY = 28;
 
   useEffect(() => {
-    const t = setInterval(() => setActiveModel((i) => (i + 1) % models.length), 1400);
+    const t = setInterval(
+      () => setActiveModel((i) => (i + 1) % models.length),
+      1400,
+    );
     return () => clearInterval(t);
   }, [models.length]);
 
   return (
-    <svg viewBox="0 0 480 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <svg
+      viewBox="0 0 480 200"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
       {/* Lines */}
       {models.map((m, i) => (
         <line
           key={m.label}
-          x1={m.cx + 40} y1={modelY + 18}
-          x2={hubCx} y2={hubCy - 26}
+          x1={m.cx + 40}
+          y1={modelY + 18}
+          x2={hubCx}
+          y2={hubCy - 26}
           stroke={activeModel === i ? '#09090b' : '#e4e4e7'}
           strokeWidth={activeModel === i ? '1.5' : '1'}
           strokeDasharray="5 4"
@@ -114,7 +124,8 @@ const HubDiagram: FC = () => {
       {/* Hub circle */}
       <circle cx={hubCx} cy={hubCy} r={26} fill="#09090b" />
       <text
-        x={hubCx} y={hubCy - 3}
+        x={hubCx}
+        y={hubCy - 3}
         textAnchor="middle"
         fill="white"
         fontSize="7"
@@ -125,7 +136,8 @@ const HubDiagram: FC = () => {
         HAVRIL
       </text>
       <text
-        x={hubCx} y={hubCy + 8}
+        x={hubCx}
+        y={hubCy + 8}
         textAnchor="middle"
         fill="white"
         fontSize="6"
@@ -140,8 +152,10 @@ const HubDiagram: FC = () => {
       {models.map((m, i) => (
         <g key={m.label}>
           <rect
-            x={m.cx} y={modelY - 4}
-            width={80} height={32}
+            x={m.cx}
+            y={modelY - 4}
+            width={80}
+            height={32}
             rx="4"
             fill={activeModel === i ? '#f4f4f5' : '#ffffff'}
             stroke={activeModel === i ? '#09090b' : '#e4e4e7'}
@@ -149,7 +163,8 @@ const HubDiagram: FC = () => {
             style={{ transition: 'all 0.3s ease' }}
           />
           <text
-            x={m.cx + 40} y={modelY + 10}
+            x={m.cx + 40}
+            y={modelY + 10}
             textAnchor="middle"
             fill={activeModel === i ? '#09090b' : '#a1a1aa'}
             fontSize="10"
@@ -160,7 +175,8 @@ const HubDiagram: FC = () => {
             {m.icon}
           </text>
           <text
-            x={m.cx + 40} y={modelY + 22}
+            x={m.cx + 40}
+            y={modelY + 22}
             textAnchor="middle"
             fill={activeModel === i ? '#09090b' : '#a1a1aa'}
             fontSize="8"
