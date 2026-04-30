@@ -2,6 +2,8 @@ package engine
 
 import (
 	"unicode/utf8"
+
+	"github.com/freedisch/havril/pkg/models"
 )
 
 const (
@@ -47,7 +49,11 @@ func clamp(v, min, max float64) float64 {
 	return v
 }
 
-func (s *Scorer) score(importanceHint float64, content string) float64 {
+func (s *Scorer) score(importanceHint float64, content string, memType string) float64 {
+	if memType == models.MemoryTypeProject{
+		result := (importanceHint * importanceHintWeight) + (1.0 * specificityWeight)
+		return  clamp(result, 0.0, 1.0)
+	}
 	specificity := specificityBonus(content)
 	result := (importanceHint * importanceHintWeight) + (specificity * specificityWeight)
 	return clamp(result, 0.0, 1.0)

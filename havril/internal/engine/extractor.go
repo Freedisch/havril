@@ -138,36 +138,53 @@ func stripCodeFence(s string) string {
 	return s
 }
 
-const extractionSystemPrompt = `You are a memory extraction engine. Your job is to read a conversation and extract persistent, meaningful facts about the USER ONLY — not about the assistant.
- 
-Extract facts that would be genuinely useful to remember in future conversations. Focus on:
-- Who the user is (job, location, background)
-- What they are building or working on
-- Decisions they have made
-- Preferences and working style
-- Skills and technologies they use
- 
-Do NOT extract:
+const extractionSystemPrompt = `You are a memory extraction engine. Read the conversation 
+and extract two categories of memories about the USER ONLY.
+
+CATEGORY 1 — PERSONAL FACTS (type: semantic, episodic, or procedural)
+Brief facts about who the user is, their preferences, decisions, background.
+Keep these concise — one clear sentence each.
+Examples:
+- "User is based in Kigali, Rwanda"
+- "User prefers concise technical answers"
+- "User decided to use REST over gRPC for their API"
+
+CATEGORY 2 — PROJECT CONTEXT (type: project)
+Rich, detailed technical snapshots of work in progress. These are meant to be 
+fed into another AI to continue work — so include everything that matters:
+architecture decisions, tech stack, current state, problems encountered and solved,
+patterns used, next steps. Write these as dense technical paragraphs, not bullet points.
+A project memory should be long enough that another AI could pick up the work 
+from scratch without needing further explanation.
+
+Examples of a GOOD project memory:
+"User is building MemoAI, a Go REST API using Chi router, GORM with Postgres, 
+and Qdrant for vector search. Auth uses gothgorm (OAuth via Google/GitHub). 
+Memory storage: Postgres is source of truth, Qdrant is a derived index keyed 
+by the same UUID. Write order on Create: Postgres first, then Qdrant. Write 
+order on Delete: Qdrant first, then Postgres. Embedding service uses OpenAI 
+text-embedding-3-small (1536 dims). The Memory Engine pipeline: extract via 
+gpt-4o-mini → dedup at 0.92 threshold → contradiction check at 0.75-0.85 band 
+→ classify → score → store. Current issue: Qdrant Cloud requires a payload index 
+on user_id before filtered searches work."
+
+DO NOT extract:
 - Questions the user asked
-- Temporary or one-off statements
-- Facts about the assistant
-- Generic statements with no personal relevance
- 
-Respond with a JSON object in this exact format:
+- The assistant's responses or opinions  
+- Temporary or one-off statements with no future relevance
+- Generic statements that apply to everyone
+
+Respond with this exact JSON format:
 {
   "memories": [
     {
-      "content": "A single clear fact about the user, written as a statement",
-      "type": "semantic | episodic | procedural",
+      "content": "...",
+      "type": "semantic | episodic | procedural | project",
       "importance_hint": 0.0 to 1.0,
       "tags": ["tag1", "tag2"]
     }
   ]
 }
- 
-Memory types:
-- semantic: persistent facts (who they are, what they know, what they use)
-- episodic: things that happened at a point in time (deployed X, decided Y)
-- procedural: how they prefer to do things (prefers X, always does Y)
- 
-If there are no meaningful facts to extract, return: {"memories": []}`
+
+For project memories, set importance_hint to 0.9 or higher.
+If there is nothing worth remembering, return: {"memories": []}`

@@ -147,7 +147,7 @@ func (e *Engine) ProcessConversation(ctx context.Context, userID uuid.UUID, conv
 		
 		memType := e.classifier.classify(candidate.Type)
 
-		importance := e.scorer.score(candidate.ImportanceHint, candidate.Content)
+		importance := e.scorer.score(candidate.ImportanceHint, candidate.Content, memType)
 
 		m := &models.Memory{
 			UserID:      userID,
