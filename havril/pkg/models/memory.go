@@ -13,7 +13,7 @@ const (
 	MemoryTypeEpisodic   = "episodic"
 	MemoryTypeProcedural = "procedural"
 	MemoryTypeSummary    = "summary"
-	MemoryTypeProject = "project"
+	MemoryTypeProject    = "project"
 )
 
 const (

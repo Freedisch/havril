@@ -50,9 +50,9 @@ func clamp(v, min, max float64) float64 {
 }
 
 func (s *Scorer) score(importanceHint float64, content string, memType string) float64 {
-	if memType == models.MemoryTypeProject{
+	if memType == models.MemoryTypeProject {
 		result := (importanceHint * importanceHintWeight) + (1.0 * specificityWeight)
-		return  clamp(result, 0.0, 1.0)
+		return clamp(result, 0.0, 1.0)
 	}
 	specificity := specificityBonus(content)
 	result := (importanceHint * importanceHintWeight) + (specificity * specificityWeight)

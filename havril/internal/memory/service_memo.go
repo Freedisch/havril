@@ -27,7 +27,7 @@ type RankedMemory struct {
 const (
 	defaultFetchLimit = 5
 	maxFetchLimit     = 20
- 
+
 	// Fetch ranking weights — must sum to 1.0
 	weightSimilarity = 0.5
 	weightImportance = 0.3
@@ -46,10 +46,7 @@ type Service interface {
 
 	Submit(ctx context.Context, userID uuid.UUID, conversation []models.Message, sourceModel string) (SubmitResult, error)
 	Fetch(ctx context.Context, userID uuid.UUID, query string, limit int) ([]*RankedMemory, error)
-
 }
-
-
 
 type service struct {
 	repo      *Repository
@@ -71,8 +68,6 @@ func (s *service) List(ctx context.Context, userID uuid.UUID) ([]*models.Memory,
 	return s.repo.List(ctx, userID, true)
 }
 
-
-
 func (s *service) Submit(ctx context.Context, userID uuid.UUID, conversation []models.Message, sourceModel string) (SubmitResult, error) {
 	result, err := s.processor.ProcessConversation(ctx, userID, conversation, sourceModel)
 	if err != nil {
@@ -84,28 +79,28 @@ func (s *service) Submit(ctx context.Context, userID uuid.UUID, conversation []m
 	}, nil
 }
 
-
 // Ranking formula (from design doc):
-//   score = (similarity × 0.5) + (importance × 0.3) + (recency × 0.2)
-//   recency = 1.0 / (1.0 + days_since_created)
+//
+//	score = (similarity × 0.5) + (importance × 0.3) + (recency × 0.2)
+//	recency = 1.0 / (1.0 + days_since_created)
 func (s *service) Fetch(ctx context.Context, userID uuid.UUID, query string, limit int) ([]*RankedMemory, error) {
-	if limit < 0{
+	if limit < 0 {
 		limit = defaultFetchLimit
-	} 
-	if limit > maxFetchLimit{
+	}
+	if limit > maxFetchLimit {
 		limit = maxFetchLimit
 	}
 	candidates, err := s.repo.SearchSimilar(ctx, userID, query, limit)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
-	if len(candidates) == 0{
+	if len(candidates) == 0 {
 		return nil, nil
 	}
 	now := time.Now().UTC()
 	ranked := make([]*RankedMemory, len(candidates))
 
-	for i, m := range candidates{
+	for i, m := range candidates {
 		daysSince := now.Sub(m.CreatedAt).Hours() / 24
 		recency := 1.0 / (1.0 + daysSince)
 
@@ -113,14 +108,14 @@ func (s *service) Fetch(ctx context.Context, userID uuid.UUID, query string, lim
 		score := (similarityProxy * weightSimilarity) + (m.Importance * weightImportance) + (recency * weightRecency)
 		ranked[i] = &RankedMemory{
 			Memory: m,
-			Score: math.Round(score * 1000)/1000,
+			Score:  math.Round(score*1000) / 1000,
 		}
 
 	}
 	sort.Slice(ranked, func(i, j int) bool {
 		return ranked[i].Score > ranked[j].Score
 	})
-	if len(ranked) > limit{
+	if len(ranked) > limit {
 		ranked = ranked[:limit]
 	}
 	go func() {
@@ -128,13 +123,10 @@ func (s *service) Fetch(ctx context.Context, userID uuid.UUID, query string, lim
 			_ = s.repo.IncrementAccess(context.Background(), m.ID)
 		}
 	}()
- 
+
 	return ranked, nil
 
-
-
 }
-
 
 func NewService(repo *Repository, proc Processor) Service {
 	return &service{repo: repo, processor: proc}

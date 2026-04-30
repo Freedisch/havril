@@ -35,7 +35,7 @@ type Engine struct {
 }
 
 func New(cfg Config, embedder embedding.Embedder, vectors store.Store, repo memoryWriter) *Engine {
-	if cfg.ContradictLower == 0{
+	if cfg.ContradictLower == 0 {
 		cfg.ContradictLower = 0.75
 	}
 	if cfg.ContradictUpper == 0 {
@@ -59,17 +59,17 @@ func New(cfg Config, embedder embedding.Embedder, vectors store.Store, repo memo
 // These are facts that the new memory likely supersedes — we mark them inactive.
 // Returns the number of memories marked inactive.
 func (e *Engine) resolveContradictions(ctx context.Context, userID uuid.UUID, content string, vec []float32) (int, error) {
-	if vec == nil{
+	if vec == nil {
 		return 0, nil
 	}
 
 	// Search for the top 5 candidates in the contradiction range
 	hits, err := e.deduplicator.vectors.Search(ctx, userID, vec, 5)
-	if err != nil{
+	if err != nil {
 		return 0, nil
 	}
 	updated := 0
-	for _, hit := range(hits){
+	for _, hit := range hits {
 		if hit.Score >= e.contradictLo && hit.Score <= e.contradictHi {
 			if err := e.repo.SetInative(ctx, hit.ID, userID); err != nil {
 				slog.Warn("engine: failed to mark memory inactive",
@@ -103,7 +103,7 @@ func (e *Engine) ProcessConversation(ctx context.Context, userID uuid.UUID, conv
 	var result models.EngineResult
 	// Step 1 — Extract candidate memories from the conversation
 	candidates, err := e.extractor.extract(ctx, conversation)
-	if err != nil{
+	if err != nil {
 		return result, err
 	}
 
@@ -114,14 +114,14 @@ func (e *Engine) ProcessConversation(ctx context.Context, userID uuid.UUID, conv
 
 	slog.Info("engine: extracted candidates", "count", len(candidates), "user_id", userID)
 
-	for _, candidate := range(candidates){
-		if candidate.Content == ""{
+	for _, candidate := range candidates {
+		if candidate.Content == "" {
 			continue
 		}
 
-		//Step 2 - verify if is duplicate 
+		//Step 2 - verify if is duplicate
 		isDup, vec, err := e.deduplicator.isDuplicate(ctx, userID, candidate.Content)
-		if err != nil{
+		if err != nil {
 			slog.Warn("engine: dedup check failed, skipping candidate",
 				"error", err,
 				"content", candidate.Content,
@@ -137,14 +137,14 @@ func (e *Engine) ProcessConversation(ctx context.Context, userID uuid.UUID, conv
 		// semantically related but not identical (similarity 0.75–0.85).
 		// These may be outdated facts that this candidate supersedes.
 		updated, err := e.resolveContradictions(ctx, userID, candidate.Content, vec)
-		if err != nil{
+		if err != nil {
 			slog.Warn("engine: contradiction check failed",
 				"error", err,
 				"content", candidate.Content,
 			)
 		}
 		result.MemoriesUpdated += updated
-		
+
 		memType := e.classifier.classify(candidate.Type)
 
 		importance := e.scorer.score(candidate.ImportanceHint, candidate.Content, memType)
@@ -158,14 +158,14 @@ func (e *Engine) ProcessConversation(ctx context.Context, userID uuid.UUID, conv
 			Tags:        candidate.Tags,
 			IsActive:    true,
 		}
-		if err := e.repo.Create(ctx, m); err != nil{
+		if err := e.repo.Create(ctx, m); err != nil {
 			slog.Error("engine: failed to save memory",
 				"error", err,
 				"content", candidate.Content,
 			)
 			continue
 		}
-		result.MemoriesCreated ++
+		result.MemoriesCreated++
 		slog.Debug("engine: memory saved", "id", m.ID, "type", memType, "importance", importance)
 	}
 	return result, nil
