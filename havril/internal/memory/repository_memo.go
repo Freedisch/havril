@@ -119,10 +119,10 @@ func (r *Repository) List(ctx context.Context, userID uuid.UUID, activeOnly bool
 // and Qdrant. Used by the Memory Engine when a contradiction is found.
 func (r *Repository) SetInative(ctx context.Context, id, userID uuid.UUID) error {
 	result := r.db.WithContext(ctx).Model(&models.Memory{}).Where("id = ? AND user_id = ?", id, userID).Update("is_active", false)
-	if result.Error != nil{
+	if result.Error != nil {
 		return fmt.Errorf("memory.SetInactive: postgres: %w", result.Error)
 	}
-	if result.RowsAffected == 0{
+	if result.RowsAffected == 0 {
 		return ErrNotFound
 	}
 
@@ -143,4 +143,3 @@ func (r *Repository) IncrementAccess(ctx context.Context, id uuid.UUID) error {
 			"last_accessed": now,
 		}).Error
 }
- 

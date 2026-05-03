@@ -10,8 +10,8 @@ type User struct {
 	gorm.Model
 	ID              string `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	Email           string `gorm:"uniqueIndex;not null"`
-	OAuthProvider   string `gorm:"not null"`
-	OAuthID         string `gorm:"not null"`
+	OAuthProvider   string `gorm:"not null;uniqueIndex:idx_users_oauth"`
+	OAuthID         string `gorm:"not null;uniqueIndex:idx_users_oauth"`
 	DisplayName     string
 	AvatarURL       string
 	TokenHash       string `gorm:"uniqueIndex"`

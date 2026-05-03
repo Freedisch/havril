@@ -256,7 +256,7 @@ func (h *OAuthHandler) Token(w http.ResponseWriter, r *http.Request) {
 func (h *OAuthHandler) tokenError(w http.ResponseWriter, code string, status int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"error": code}) 
+	json.NewEncoder(w).Encode(map[string]string{"error": code})
 }
 
 // tokenValid returns true if rawToken hashes to a known user in the database.

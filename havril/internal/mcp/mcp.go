@@ -27,7 +27,7 @@ func (m *sessionIDManager) Generate() string {
 	return "mcp-session-" + uuid.New().String()
 }
 
-func (m *sessionIDManager) Validate(_ string) (bool, error) { return false, nil }
+func (m *sessionIDManager) Validate(_ string) (bool, error)  { return false, nil }
 func (m *sessionIDManager) Terminate(_ string) (bool, error) { return false, nil }
 
 type Server struct {
@@ -119,11 +119,11 @@ func writeUnauthorized(w http.ResponseWriter) {
 	w.Write([]byte(`{"error":"unauthorized","code":"bearer_token_required"}`)) //nolint:errcheck
 }
 
-func (s *Server) registerFetchMemories(){
+func (s *Server) registerFetchMemories() {
 	tool := mcp.NewTool("fetch_memories", mcp.WithDescription(
-			"Retrieve memories relevant to the current conversation context. "+
-				"Call this at the start of every new conversation to personalise your response.",
-		),
+		"Retrieve memories relevant to the current conversation context. "+
+			"Call this at the start of every new conversation to personalise your response.",
+	),
 		mcp.WithString("query",
 			mcp.Required(),
 			mcp.Description("The current user message or topic to search against"),
@@ -131,8 +131,8 @@ func (s *Server) registerFetchMemories(){
 		mcp.WithNumber("limit",
 			mcp.Description("Maximum number of memories to return (default 5, max 20)"),
 		),
-)
-s.mcp.AddTool(tool, s.handleFetchMemories)
+	)
+	s.mcp.AddTool(tool, s.handleFetchMemories)
 }
 
 func (s *Server) handleFetchMemories(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -159,30 +159,29 @@ func (s *Server) handleFetchMemories(ctx context.Context, req mcp.CallToolReques
 	}
 
 	items := make([]memItem, 0, len(memories))
-	for _, m := range memories{
+	for _, m := range memories {
 		items = append(items, memItem{
-			Content: m.Content,
-			Type: m.Type,
+			Content:    m.Content,
+			Type:       m.Type,
 			Importance: m.Importance,
 		})
 	}
 
 	data, err := json.Marshal(map[string]any{"memories": items})
-	if err != nil{
+	if err != nil {
 		return mcp.NewToolResultError("failed to encode memories"), nil
 	}
 	return mcp.NewToolResultText(string(data)), nil
 
 }
 
-
-func extractBearerToken(r *http.Request) (string, error){
+func extractBearerToken(r *http.Request) (string, error) {
 	header := r.Header.Get("Authorization")
-	if header == ""{
+	if header == "" {
 		return "", fmt.Errorf("missing Authorization header")
 	}
 	const prefix = "Bearer "
-	if len(header) <= len(prefix){
+	if len(header) <= len(prefix) {
 		return "", fmt.Errorf("malformed Authorization header")
 	}
 	return header[len(prefix):], nil
@@ -206,15 +205,15 @@ func (s *Server) handleSubmitConversation(ctx context.Context, req mcp.CallToolR
 	}
 
 	convBytes, err := json.Marshal(rawConv)
-	if err != nil{
+	if err != nil {
 		return mcp.NewToolResultError("invalid conversation format"), nil
 	}
 	var conversation []models.Message
-	if err := json.Unmarshal(convBytes, &conversation); err != nil{
+	if err := json.Unmarshal(convBytes, &conversation); err != nil {
 		return mcp.NewToolResultError("conversation must be an array of {role, content} objects"), nil
 	}
 
-	if len(conversation) == 0{
+	if len(conversation) == 0 {
 		return mcp.NewToolResultError("conversation must not be empty"), nil
 	}
 
@@ -224,14 +223,14 @@ func (s *Server) handleSubmitConversation(ctx context.Context, req mcp.CallToolR
 	}
 
 	data, err := json.Marshal(result)
-	if err != nil{
+	if err != nil {
 		return mcp.NewToolResultError("failed to encode result"), nil
 	}
 
 	return mcp.NewToolResultText(string(data)), nil
 }
 
-func (s *Server) registerSubmitConversation(){
+func (s *Server) registerSubmitConversation() {
 	tool := mcp.NewTool("submit_conversation",
 		mcp.WithDescription(
 			"Submit this conversation to MemoAI for processing and memory storage. "+
@@ -246,7 +245,7 @@ func (s *Server) registerSubmitConversation(){
 			mcp.Description("The model identifier submitting this conversation, e.g. claude-sonnet-4-5"),
 		),
 	)
- 
+
 	s.mcp.AddTool(tool, s.handleSubmitConversation)
 }
 
@@ -297,4 +296,3 @@ func (s *Server) authenticate(ctx context.Context, r *http.Request) context.Cont
 	log.Printf("authenticate: user %s authenticated", userID)
 	return user.WithUserID(ctx, userID)
 }
-

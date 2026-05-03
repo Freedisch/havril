@@ -74,15 +74,14 @@ func parseUUID(w http.ResponseWriter, r *http.Request, param string) (uuid.UUID,
 	return id, nil
 }
 
-
 func (h *MemoryHandler) Submit(w http.ResponseWriter, r *http.Request) {
 	userID := user.UserIDFromContext(r.Context())
- 
+
 	var body struct {
 		Conversation []models.Message `json:"conversation"`
 		SourceModel  string           `json:"source_model"`
 	}
- 
+
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, "invalid_request", "malformed JSON body", http.StatusBadRequest)
 		return
@@ -95,7 +94,7 @@ func (h *MemoryHandler) Submit(w http.ResponseWriter, r *http.Request) {
 		writeError(w, "invalid_request", "source_model is required", http.StatusBadRequest)
 		return
 	}
- 
+
 	// Validate each message has a role and content
 	for i, msg := range body.Conversation {
 		if msg.Role != "user" && msg.Role != "assistant" {
@@ -109,7 +108,7 @@ func (h *MemoryHandler) Submit(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
- 
+
 	result, err := h.service.Submit(r.Context(), userID, body.Conversation, body.SourceModel)
 	if err != nil {
 		slog.Error("engine failed", "error", err)
@@ -121,13 +120,13 @@ func (h *MemoryHandler) Submit(w http.ResponseWriter, r *http.Request) {
 
 func (h *MemoryHandler) Fetch(w http.ResponseWriter, r *http.Request) {
 	userID := user.UserIDFromContext(r.Context())
- 
+
 	query := r.URL.Query().Get("q")
 	if query == "" {
-		writeError(w,"invalid_request", "query parameter 'q' is required",  http.StatusBadRequest)
+		writeError(w, "invalid_request", "query parameter 'q' is required", http.StatusBadRequest)
 		return
 	}
- 
+
 	limit := 5
 	if raw := r.URL.Query().Get("limit"); raw != "" {
 		parsed, err := strconv.Atoi(raw)
@@ -137,23 +136,23 @@ func (h *MemoryHandler) Fetch(w http.ResponseWriter, r *http.Request) {
 		}
 		limit = parsed
 	}
- 
+
 	memories, err := h.service.Fetch(r.Context(), userID, query, limit)
 	if err != nil {
 		writeError(w, "internal_error", "failed to fetch memories", http.StatusInternalServerError)
 		return
 	}
- 
+
 	// Build response — strip the internal Score field from public responses
 	type memoryResponse struct {
-		ID          uuid.UUID  `json:"id"`
-		Content     string     `json:"content"`
-		Type        string     `json:"type"`
-		Importance  float64    `json:"importance"`
-		Tags        []string   `json:"tags"`
-		CreatedAt   string     `json:"created_at"`
+		ID         uuid.UUID `json:"id"`
+		Content    string    `json:"content"`
+		Type       string    `json:"type"`
+		Importance float64   `json:"importance"`
+		Tags       []string  `json:"tags"`
+		CreatedAt  string    `json:"created_at"`
 	}
- 
+
 	items := make([]memoryResponse, 0, len(memories))
 	for _, m := range memories {
 		items = append(items, memoryResponse{
@@ -165,6 +164,6 @@ func (h *MemoryHandler) Fetch(w http.ResponseWriter, r *http.Request) {
 			CreatedAt:  m.CreatedAt.Format("2006-01-02T15:04:05Z"),
 		})
 	}
- 
+
 	writeJSON(w, map[string]any{"memories": items}, http.StatusOK)
 }

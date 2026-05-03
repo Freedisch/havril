@@ -141,7 +141,6 @@ func main() {
 	r.Method(http.MethodGet, "/mcp", mcpHandler)
 	r.Method(http.MethodDelete, "/mcp", mcpHandler)
 
-
 	log.Printf("havril listening on :%s", port)
 	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatalf("server: %v", err)
@@ -150,6 +149,5 @@ func main() {
 
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok"}`)) 
+	w.Write([]byte(`{"status":"ok"}`))
 }
-
