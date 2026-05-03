@@ -6,7 +6,7 @@ const DEFAULT_SERVER = 'http://localhost:8080';
 function applyTheme(dark) {
   document.body.dataset.theme = dark ? 'dark' : 'light';
   $('icon-moon').style.display = dark ? 'none' : '';
-  $('icon-sun').style.display  = dark ? '' : 'none';
+  $('icon-sun').style.display = dark ? '' : 'none';
 }
 
 chrome.storage.sync.get(['havrilTheme'], (r) => {
@@ -41,30 +41,34 @@ function applyUserInfo({ userName, userEmail, userAvatar }) {
   if (userAvatar) $('user-avatar').src = userAvatar;
 }
 
-chrome.storage.sync.get(
-  ['token', 'serverUrl', 'userName', 'userEmail', 'userAvatar', 'havrilTheme'],
-  async (stored) => {
-    if (stored.serverUrl) $('serverUrl').value = stored.serverUrl;
-
-    if (stored.token) {
-      applyUserInfo(stored);
-      await loadConnectedState(
-        stored.serverUrl || DEFAULT_SERVER,
-        stored.token,
-      );
-    } else {
-      showView('login');
-    }
-  },
-);
+Promise.all([
+  new Promise((r) => chrome.storage.session.get(['token'], r)),
+  new Promise((r) =>
+    chrome.storage.sync.get(
+      ['serverUrl', 'userName', 'userEmail', 'userAvatar'],
+      r,
+    ),
+  ),
+]).then(async ([session, sync]) => {
+  if (sync.serverUrl) $('serverUrl').value = sync.serverUrl;
+  if (session.token) {
+    applyUserInfo(sync);
+    await loadConnectedState(sync.serverUrl || DEFAULT_SERVER, session.token);
+  } else {
+    showView('login');
+  }
+});
 
 // ── AUTH_SUCCESS from background (popup was open during OAuth) ────────────────
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type !== 'AUTH_SUCCESS') return;
   applyUserInfo(message);
-  chrome.storage.sync.get(['token', 'serverUrl'], async (stored) => {
-    await loadConnectedState(stored.serverUrl || DEFAULT_SERVER, stored.token);
+  Promise.all([
+    new Promise((r) => chrome.storage.session.get(['token'], r)),
+    new Promise((r) => chrome.storage.sync.get(['serverUrl'], r)),
+  ]).then(async ([session, sync]) => {
+    await loadConnectedState(sync.serverUrl || DEFAULT_SERVER, session.token);
   });
 });
 
@@ -106,12 +110,8 @@ async function loadConnectedState(serverUrl, token) {
     });
 
     if (res.status === 401) {
-      await chrome.storage.sync.remove([
-        'token',
-        'userName',
-        'userEmail',
-        'userAvatar',
-      ]);
+      await chrome.storage.sync.remove(['userName', 'userEmail', 'userAvatar']);
+      await chrome.storage.session.remove(['token']);
       showView('login');
       setMsg('Session expired — please sign in again', 'error');
       return;
