@@ -17,15 +17,15 @@ import (
 const (
 	openAIChatURL      = "https://api.openai.com/v1/chat/completions"
 	extractorModel     = "gpt-4o-mini"
-	extractorTimeout   = 30 * time.Second
-	extractorMaxTokens = 1000
+	extractorTimeout   = 60 * time.Second
+	extractorMaxTokens = 4096
 )
 
 type candidateMemory struct {
 	Content        string   `json:"content"`
 	Type           string   `json:"type"`
 	ImportanceHint float64  `json:"importance_hint"`
-	Tags           []string `json:"Tags"`
+	Tags           []string `json:"tags"`
 }
 
 type extractionResult struct {
@@ -116,7 +116,6 @@ func (e *Extractor) extract(ctx context.Context, conversation []models.Message) 
 		)
 		return nil, nil
 	}
-
 	return result.Memories, nil
 }
 
@@ -138,53 +137,48 @@ func stripCodeFence(s string) string {
 	return s
 }
 
-const extractionSystemPrompt = `You are a memory extraction engine. Read the conversation 
-and extract two categories of memories about the USER ONLY.
+const extractionSystemPrompt = `You are a memory extraction engine. Read the conversation and extract memories.
 
-CATEGORY 1 — PERSONAL FACTS (type: semantic, episodic, or procedural)
-Brief facts about who the user is, their preferences, decisions, background.
-Keep these concise — one clear sentence each.
-Examples:
-- "User is based in Kigali, Rwanda"
-- "User prefers concise technical answers"
-- "User decided to use REST over gRPC for their API"
 
-CATEGORY 2 — PROJECT CONTEXT (type: project)
-Rich, detailed technical snapshots of work in progress. These are meant to be 
-fed into another AI to continue work — so include everything that matters:
-architecture decisions, tech stack, current state, problems encountered and solved,
-patterns used, next steps. Write these as dense technical paragraphs, not bullet points.
-A project memory should be long enough that another AI could pick up the work 
-from scratch without needing further explanation.
+CATEGORY — WORK CONTEXT (type: project)
+A rich, detailed snapshot of whatever the user is working on, studying, or trying to accomplish. The purpose of this memory is to allow the user to paste it into a different AI platform and immediately continue where they left off — so capture everything that matters: the goal, the current state, what has been tried, what worked, what didn't, open questions, and next steps.
+ 
+This applies to ANY kind of work, not just software:
+- A coding project → architecture, stack, current bugs, design decisions
+- A research paper → thesis, sources found, arguments developed, gaps remaining
+- A homework assignment → the question, the approach taken, what the user understands so far
+- A learning goal → what the user is learning, what they've covered, what's still unclear
+- A creative project → concept, what exists so far, direction, constraints
+- A business problem → context, options considered, decision made, next action
+ 
+Write project memories as dense paragraphs, not bullet points. They should be long enough that another AI could pick up the work from scratch without needing further explanation from the user.
+ 
+Example of a GOOD project memory (research):
+"User is writing a research paper on the accuracy and compression trade-offs of TurboQuant when applied to tonal African languages, specifically Ewe. The paper argues that standard quantization metrics fail to account for tonal information loss. Current state: literature review complete, methodology section drafted. Main challenge: finding evaluation benchmarks for low-resource tonal languages. Next step: compare WER scores between baseline and quantized models using the WAXAL corpus."
+ 
+Example of a GOOD project memory (homework):
+"User is working on a thermodynamics problem set, question 4: calculating the efficiency of a Carnot engine operating between 300K and 800K. User understands the formula η = 1 - Tc/Th but is confused about why the efficiency ceiling cannot be exceeded. Currently stuck on the entropy explanation. Has read the textbook section but found it unclear."
+ 
+Example of a GOOD project memory (coding):
+"User is building MemoAI, a Go REST API using Chi router, GORM with Postgres, and Qdrant for vector search. Auth uses gothgorm (OAuth via Google/GitHub). Memory storage: Postgres is source of truth, Qdrant is a derived index. Write order on Create: Postgres first, then Qdrant. Embedding service uses OpenAI text-embedding-3-small (1536 dims). Current issue: Qdrant Cloud requires a payload index on user_id before filtered searches work. Next step: wire the MCP server into the router."
 
-Examples of a GOOD project memory:
-"User is building MemoAI, a Go REST API using Chi router, GORM with Postgres, 
-and Qdrant for vector search. Auth uses gothgorm (OAuth via Google/GitHub). 
-Memory storage: Postgres is source of truth, Qdrant is a derived index keyed 
-by the same UUID. Write order on Create: Postgres first, then Qdrant. Write 
-order on Delete: Qdrant first, then Postgres. Embedding service uses OpenAI 
-text-embedding-3-small (1536 dims). The Memory Engine pipeline: extract via 
-gpt-4o-mini → dedup at 0.92 threshold → contradiction check at 0.75-0.85 band 
-→ classify → score → store. Current issue: Qdrant Cloud requires a payload index 
-on user_id before filtered searches work."
-
-DO NOT extract:
-- Questions the user asked
-- The assistant's responses or opinions  
-- Temporary or one-off statements with no future relevance
-- Generic statements that apply to everyone
-
+ 
 Respond with this exact JSON format:
 {
   "memories": [
     {
       "content": "...",
-      "type": "semantic | episodic | procedural | project",
-      "importance_hint": 0.0 to 1.0,
+      "type": "project",
+      "importance_hint": 0.0,
       "tags": ["tag1", "tag2"]
     }
   ]
 }
 
-For project memories, set importance_hint to 0.9 or higher.
-If there is nothing worth remembering, return: {"memories": []}`
+For project memories set importance_hint to 0.9 or higher.
+For personal facts set importance_hint between 0.4 and 0.8 based on how specific and useful the fact is.
+`
+ 
+
+
+
