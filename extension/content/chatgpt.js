@@ -65,7 +65,7 @@ async function submitConversation() {
 
 function init() {
   injectMemoryPickerButton(getChatGPTInput, submitConversation);
-  loadMemories();
+  //loadMemories();
 
   // Bridge between fetch-proxy.js (main world) and background service worker
   window.addEventListener('havril-fetch-memories', async (e) => {

@@ -85,8 +85,8 @@ async function submitConversation() {
 
 function init() {
   injectMemoryPickerButton(getGeminiInput, submitConversation);
-  loadMemories();
-  watchInputAndInject(getGeminiInput);
+  //loadMemories();
+  //watchInputAndInject(getGeminiInput);
 }
 
 let lastUrl = location.href;

@@ -86,8 +86,8 @@ async function submitConversation() {
 
 function init() {
   injectMemoryPickerButton(getClaudeInput, submitConversation);
-  loadMemories();
-  watchInputAndInject(getClaudeInput);
+  //loadMemories();
+  //watchInputAndInject(getClaudeInput);
 }
 
 // Claude.ai is a SPA — re-init when the URL changes (new conversation)
