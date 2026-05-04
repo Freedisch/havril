@@ -1,6 +1,9 @@
 const $ = (id) => document.getElementById(id);
 const DEFAULT_SERVER = 'http://localhost:8080';
 
+let _activeServerUrl = DEFAULT_SERVER;
+let _activeToken = null;
+
 // ── Theme ─────────────────────────────────────────────────────────────────────
 
 function applyTheme(dark) {
@@ -104,6 +107,8 @@ $('advanced-toggle').addEventListener('click', () => {
 // ── Connected state ───────────────────────────────────────────────────────────
 
 async function loadConnectedState(serverUrl, token) {
+  _activeServerUrl = serverUrl;
+  _activeToken = token;
   try {
     const res = await fetch(`${serverUrl}/v1/memory`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -127,6 +132,40 @@ async function loadConnectedState(serverUrl, token) {
   }
 }
 
+// ── MCP Token ─────────────────────────────────────────────────────────────────
+
+$('btn-generate-mcp').addEventListener('click', async () => {
+  const btn = $('btn-generate-mcp');
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const res = await fetch(`${_activeServerUrl}/v1/mcp/token`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${_activeToken}` },
+    });
+    if (!res.ok) throw new Error('server error');
+    const data = await res.json();
+    $('mcp-token-value').textContent = data.mcp_token;
+    $('mcp-token-display').style.display = 'block';
+    $('btn-copy-mcp').textContent = 'Copy';
+  } catch {
+    btn.textContent = 'Error';
+    setTimeout(() => { btn.textContent = 'Generate'; btn.disabled = false; }, 2000);
+    return;
+  }
+  btn.textContent = 'Regenerate';
+  btn.disabled = false;
+});
+
+$('btn-copy-mcp').addEventListener('click', () => {
+  const val = $('mcp-token-value').textContent;
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(() => {
+    $('btn-copy-mcp').textContent = 'Copied!';
+    setTimeout(() => { $('btn-copy-mcp').textContent = 'Copy'; }, 2000);
+  });
+});
+
 // ── Logout ────────────────────────────────────────────────────────────────────
 
 $('btn-logout').addEventListener('click', () => {
@@ -134,6 +173,11 @@ $('btn-logout').addEventListener('click', () => {
     $('user-name').textContent = '—';
     $('user-email').textContent = '—';
     $('user-avatar').src = '';
+    $('mcp-token-display').style.display = 'none';
+    $('mcp-token-value').textContent = '';
+    $('btn-generate-mcp').textContent = 'Generate';
+    $('btn-generate-mcp').disabled = false;
+    _activeToken = null;
     showView('login');
     setMsg('');
   });
