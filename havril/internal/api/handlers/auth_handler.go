@@ -7,6 +7,7 @@ import (
 
 	userSvc "github.com/freedisch/havril/internal/user"
 	"github.com/freedisch/havril/pkg/utils"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/markbates/goth/gothic"
 )
@@ -94,4 +95,20 @@ func (h *AuthHandler) ExtDone(w http.ResponseWriter, r *http.Request) {
 	_ = godotenv.Load()
 	homePageURL := utils.GetEnv("HOMEPAGE_URL", "https://tryavril.vercel.app/")
 	http.Redirect(w, r, homePageURL, http.StatusOK)
+}
+
+func (h *AuthHandler) NewMcpToken(w http.ResponseWriter, r *http.Request) {
+	userID := userSvc.UserIDFromContext(r.Context())
+	if userID == (uuid.UUID{}) {
+		writeError(w, "unauthorized", "missing_token", http.StatusUnauthorized)
+		return
+	}
+
+	mcpToken, err := h.users.GenerateMcpToken(r.Context(), userID.String())
+	if err != nil {
+		writeError(w, "failed to generate mcp token", "internal_error", http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, map[string]string{"mcp_token": mcpToken}, http.StatusOK)
 }

@@ -122,9 +122,9 @@ func main() {
 	r.Get("/oauth/authorize", oauthHandler.Authorize)
 	r.Post("/oauth/authorize", oauthHandler.Authorize)
 	r.Post("/oauth/token", oauthHandler.Token)
-
 	r.Group(func(r chi.Router) {
 		r.Use(authMid.Authenticate)
+		r.Post("/v1/mcp/token", authHandler.NewMcpToken)
 		r.Post("/v1/models/connect", modelsHandler.Connect)
 		r.Get("/v1/models", modelsHandler.List)
 
@@ -137,9 +137,12 @@ func main() {
 
 	mcpSrv := mcp.New(memorySvc, userRepo)
 	mcpHandler := mcpSrv.MustAuth(mcpSrv.Handler())
-	r.Method(http.MethodPost, "/mcp", mcpHandler)
-	r.Method(http.MethodGet, "/mcp", mcpHandler)
-	r.Method(http.MethodDelete, "/mcp", mcpHandler)
+	r.Group(func(r chi.Router) {
+		r.Use(authMid.AuthenticateMcp)
+		r.Method(http.MethodPost, "/mcp", mcpHandler)
+		r.Method(http.MethodGet, "/mcp", mcpHandler)
+		r.Method(http.MethodDelete, "/mcp", mcpHandler)
+	})
 
 	log.Printf("havril listening on :%s", port)
 	if err := http.ListenAndServe(":"+port, r); err != nil {

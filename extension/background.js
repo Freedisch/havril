@@ -2,17 +2,14 @@
 // never need CORS permissions directly.
 
 async function getConfig() {
-  return new Promise((resolve) => {
-    chrome.storage.sync.get(['token', 'serverUrl'], (result) => {
-      resolve({
-        token: result.token || '',
-        serverUrl: (result.serverUrl || 'http://localhost:8080').replace(
-          /\/$/,
-          '',
-        ),
-      });
-    });
-  });
+  const [session, sync] = await Promise.all([
+    new Promise((r) => chrome.storage.session.get(['token'], r)),
+    new Promise((r) => chrome.storage.sync.get(['serverUrl'], r)),
+  ]);
+  return {
+    token: session.token || '',
+    serverUrl: (sync.serverUrl || 'http://localhost:8080').replace(/\/$/, ''),
+  };
 }
 
 async function apiFetch(path, options = {}) {
@@ -68,14 +65,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   const userName = url.searchParams.get('name') || '';
   const userEmail = url.searchParams.get('email') || '';
   const userAvatar = url.searchParams.get('avatar') || '';
+  if (!token) return;
 
-  if (token) {
-    // New user — store the token along with profile info.
-    await chrome.storage.sync.set({ token, userName, userEmail, userAvatar });
-  } else if (userName || userEmail) {
-    // Returning user — keep the existing token, only refresh profile.
-    await chrome.storage.sync.set({ userName, userEmail, userAvatar });
-  }
+  await chrome.storage.session.set({ token });
+  await chrome.storage.sync.set({ userName, userEmail, userAvatar });
 
   await chrome.storage.session.remove(['authTabId']);
   chrome.tabs.remove(tabId);
@@ -119,8 +112,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return { started: true };
       }
       case 'LOGOUT': {
+        await chrome.storage.session.remove(['token']);
         await chrome.storage.sync.remove([
-          'token',
           'userName',
           'userEmail',
           'userAvatar',

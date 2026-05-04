@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/freedisch/havril/internal/embedding"
@@ -106,6 +107,7 @@ func (e *Engine) ProcessConversation(ctx context.Context, userID uuid.UUID, conv
 	if err != nil {
 		return result, err
 	}
+	fmt.Printf("result memories %v", candidates)
 
 	if len(candidates) == 0 {
 		slog.Info("engine: no candidates extracted from conversation", "user_id", userID)

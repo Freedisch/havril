@@ -45,9 +45,27 @@ func (r *Repository) SaveToken(ctx context.Context, userID, tokenHash, tokenPref
 	return result.Error
 }
 
+func (r *Repository) SaveMcpToken(ctx context.Context, userID, tokenMcpHash, tokenMcpPrefix string) error {
+	result := r.db.WithContext(ctx).Model(&models.User{}).Where("id = ?", userID).Updates(map[string]any{
+		"mcp_token_hash":   tokenMcpHash,
+		"mcp_token_prefix": tokenMcpPrefix,
+	})
+	return result.Error
+}
+
 func (r *Repository) GetByTokenHash(ctx context.Context, tokenHash string) (*models.User, error) {
 	var user models.User
 	result := r.db.WithContext(ctx).Where("token_hash = ?", tokenHash).First(&user)
+	if result.Error != nil {
+		return nil, fmt.Errorf("get user by token: %w", result.Error)
+	}
+
+	return &user, nil
+}
+
+func (r *Repository) GetByMcpTokenHash(ctx context.Context, tokenMcpHash string) (*models.User, error) {
+	var user models.User
+	result := r.db.WithContext(ctx).Where("mcp_token_hash = ?", tokenMcpHash).First(&user)
 	if result.Error != nil {
 		return nil, fmt.Errorf("get user by token: %w", result.Error)
 	}
