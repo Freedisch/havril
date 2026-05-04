@@ -73,6 +73,12 @@ func (s *Server) Handler() http.Handler {
 // user to /oauth/authorize to log in.
 func (s *Server) MustAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// If upstream middleware (AuthenticateMcp) already authenticated, skip re-auth.
+		if uid := user.UserIDFromContext(r.Context()); uid != (uuid.UUID{}) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		var userID uuid.UUID
 
 		// Re-use session authenticated during initialize.
@@ -91,7 +97,7 @@ func (s *Server) MustAuth(next http.Handler) http.Handler {
 			}
 			sum := sha256.Sum256([]byte(token))
 			tokenHash := hex.EncodeToString(sum[:])
-			u, err := s.userRepo.GetByTokenHash(r.Context(), tokenHash)
+			u, err := s.userRepo.GetByMcpTokenHash(r.Context(), tokenHash)
 			if err != nil {
 				writeUnauthorized(w)
 				return
@@ -102,7 +108,6 @@ func (s *Server) MustAuth(next http.Handler) http.Handler {
 				return
 			}
 			userID = uid
-			// Cache so subsequent requests in this session skip token validation.
 			if sid := r.Header.Get("Mcp-Session-Id"); sid != "" {
 				s.sessions.Store(sid, userID)
 			}
@@ -276,9 +281,9 @@ func (s *Server) authenticate(ctx context.Context, r *http.Request) context.Cont
 	sum := sha256.Sum256([]byte(token))
 	tokenHash := hex.EncodeToString(sum[:])
 
-	u, err := s.userRepo.GetByTokenHash(ctx, tokenHash)
+	u, err := s.userRepo.GetByMcpTokenHash(ctx, tokenHash)
 	if err != nil {
-		log.Printf("authenticate: get user by token hash: %v", err)
+		log.Printf("authenticate: get user by mcp token hash: %v", err)
 		return ctx
 	}
 	userID, err := uuid.Parse(u.ID)

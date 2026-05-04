@@ -178,7 +178,3 @@ Respond with this exact JSON format:
 For project memories set importance_hint to 0.9 or higher.
 For personal facts set importance_hint between 0.4 and 0.8 based on how specific and useful the fact is.
 `
- 
-
-
-

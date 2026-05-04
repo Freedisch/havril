@@ -43,6 +43,10 @@ func (s *Service) GetByTokenHash(ctx context.Context, hash string) (*models.User
 	return s.repo.GetByTokenHash(ctx, hash)
 }
 
+func (s *Service) GetByMcpTokenHash(ctx context.Context, hash string) (*models.User, error) {
+	return s.repo.GetByMcpTokenHash(ctx, hash)
+}
+
 func (s *Service) TouchLastSeen(ctx context.Context, userID string) error {
 	return s.repo.TouchLastSeen(ctx, userID)
 }
@@ -71,4 +75,18 @@ func WithUserID(ctx context.Context, id uuid.UUID) context.Context {
 func UserIDFromContext(ctx context.Context) uuid.UUID {
 	id, _ := ctx.Value(userIDKey).(uuid.UUID)
 	return id
+}
+
+func (s *Service) GenerateMcpToken(ctx context.Context, userID string) (string, error) {
+
+	mcpToken, tokenHash, tokenPrefix, err := generateToken()
+	if err != nil {
+		return "", fmt.Errorf("generate token: %w", err)
+	}
+
+	if err := s.repo.SaveMcpToken(ctx, userID, tokenHash, tokenPrefix); err != nil {
+		return "", fmt.Errorf("save token: %w", err)
+	}
+
+	return mcpToken, nil
 }

@@ -16,6 +16,8 @@ type User struct {
 	AvatarURL       string
 	TokenHash       string `gorm:"uniqueIndex"`
 	TokenPrefix     string
+	McpTokenHash    string
+	McpTokenPrefix  string
 	LastSeenAt      *time.Time
 	ConnectedModels []ConnectedModel `gorm:"foreignKey:UserID"`
 	Memories        []Memory         `gorm:"foreignKey:UserID"`
