@@ -536,17 +536,40 @@ function _buildPickerUI() {
     if (item) item.style.background = 'transparent';
   });
 
+  const MEMORY_TYPE_DESCRIPTIONS = {
+    project: 'an ongoing project the user has been working on',
+    preference: 'a preference or working style the user has expressed',
+    fact: 'a factual detail the user has shared about themselves',
+    episodic: 'something that happened to the user at a point in time',
+    procedural: 'how the user prefers to approach or do something',
+    summary: 'a compressed digest of older context about this user',
+    semantic: 'a persistent fact about the user or their world',
+  };
+
+  function getTypeDescription(type) {
+    return (
+      MEMORY_TYPE_DESCRIPTIONS[type?.toLowerCase()] ??
+      'a piece of remembered context about this user'
+    );
+  }
+
   function pasteMemoryToInput(memory) {
     const inputEl = _pickerInputEl?.();
     if (!inputEl) {
       showToast('Chat input not found — click the chat box first', 'error');
       return;
     }
+
     const type = memory.type || 'memory';
     const raw = (memory.content || '').trim();
-
     const body = formatMemoryBody(raw);
-    const block = `[Havril Memory — ${type}]\n\n${body}\n\n[/Havril Memory]`;
+
+    const preamble =
+      `Havril is a context memory layer that persists what users work on and care about across conversations. ` +
+      `The following is ${getTypeDescription(type)}:`;
+
+    const block = `[Havril Memory — ${type}]\n${preamble}\n\n${body}\n\n[/Havril Memory]`;
+
     const existing = getInputValue(inputEl).trim();
     setInputValue(inputEl, existing ? `${existing}\n\n${block}` : block);
     inputEl.focus();
