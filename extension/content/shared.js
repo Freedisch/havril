@@ -519,7 +519,7 @@ function _buildPickerUI() {
     if (!item) return;
     const memory = currentMemories[parseInt(item.dataset.idx, 10)];
     if (!memory) return;
-    pasteMemoryToInput(memory.content);
+    pasteMemoryToInput(memory);
     closePanel();
   });
   resultsEl.addEventListener('mouseover', (e) => {
@@ -531,15 +531,16 @@ function _buildPickerUI() {
     if (item) item.style.background = 'transparent';
   });
 
-  // ── Paste ─────────────────────────────────────────────────────────────────
-  function pasteMemoryToInput(content) {
+  function pasteMemoryToInput(memory) {
     const inputEl = _pickerInputEl?.();
     if (!inputEl) {
       showToast('Chat input not found — click the chat box first', 'error');
       return;
     }
+    const type = memory.type || 'memory';
+    const block = `[Havril Memory — ${type}]\n${memory.content}\n[/Havril Memory]`;
     const existing = getInputValue(inputEl).trim();
-    setInputValue(inputEl, existing ? `${existing}\n\n${content}` : content);
+    setInputValue(inputEl, existing ? `${existing}\n\n${block}` : block);
     inputEl.focus();
     showToast('Memory pasted ✓', 'success');
   }
