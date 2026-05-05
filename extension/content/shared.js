@@ -538,11 +538,37 @@ function _buildPickerUI() {
       return;
     }
     const type = memory.type || 'memory';
-    const block = `[Havril Memory — ${type}]\n${memory.content}\n[/Havril Memory]`;
+    const raw = (memory.content || '').trim();
+
+    const body = formatMemoryBody(raw);
+    const block = `[Havril Memory — ${type}]\n\n${body}\n\n[/Havril Memory]`;
     const existing = getInputValue(inputEl).trim();
     setInputValue(inputEl, existing ? `${existing}\n\n${block}` : block);
     inputEl.focus();
     showToast('Memory pasted ✓', 'success');
+  }
+
+  function formatMemoryBody(text, sentencesPerParagraph = 3) {
+    // If natural paragraphs already exist, use them
+    const naturalParagraphs = text
+      .split(/\n{2,}/)
+      .map((p) => p.replace(/\n/g, ' ').trim())
+      .filter(Boolean);
+    if (naturalParagraphs.length > 1) {
+      return naturalParagraphs.join('\n\n');
+    }
+
+    // Otherwise split into sentences and group them
+    const sentences = text
+      .split(/(?<=[.!?])\s+(?=[A-Z])/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const paragraphs = [];
+    for (let i = 0; i < sentences.length; i += sentencesPerParagraph) {
+      paragraphs.push(sentences.slice(i, i + sentencesPerParagraph).join(' '));
+    }
+    return paragraphs.join('\n\n');
   }
 
   document.body.appendChild(panel);
