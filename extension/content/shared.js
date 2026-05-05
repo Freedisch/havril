@@ -187,8 +187,13 @@ function setInputValue(el, value) {
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
   } else {
-    el.innerText = value;
-    el.dispatchEvent(new InputEvent('input', { bubbles: true }));
+    el.focus();
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand('insertText', false, value);
   }
 }
 
