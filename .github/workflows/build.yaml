@@ -23,4 +23,5 @@ jobs:
               run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
             - name: Build binary
-              run: cd havril & GOOS=linux GOARCH=amd64 go build -o havril .
+              working-directory: havril
+              run: GOOS=linux GOARCH=amd64 go build -o ../havril .
