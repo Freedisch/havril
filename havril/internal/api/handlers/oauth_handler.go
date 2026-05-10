@@ -119,6 +119,11 @@ func (h *OAuthHandler) autoAuthorize(w http.ResponseWriter, r *http.Request, raw
 		return
 	}
 
+	if q.Get("code_challenge") == "" || q.Get("code_challenge_method") != "S256" {
+		http.Error(w, "PKCE with S256 is required", http.StatusBadRequest)
+		return
+	}
+
 	if !h.tokenValid(r, rawToken) {
 		// Stale or invalid session — clear it and fall back to the form
 		http.SetCookie(w, &http.Cookie{Name: "havril_session", Value: "", MaxAge: -1, Path: "/"})
@@ -189,6 +194,11 @@ func (h *OAuthHandler) authorizeSubmit(w http.ResponseWriter, r *http.Request) {
 	state := r.FormValue("state")
 	codeChallenge := r.FormValue("code_challenge")
 	rawToken := strings.TrimSpace(r.FormValue("token"))
+
+	if codeChallenge == "" || r.FormValue("code_challenge_method") != "S256" {
+		http.Error(w, "PKCE with S256 is required", http.StatusBadRequest)
+		return
+	}
 
 	if redirectURI == "" || rawToken == "" {
 		http.Error(w, "missing redirect_uri or token", http.StatusBadRequest)
