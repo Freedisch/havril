@@ -30,7 +30,18 @@ type codeEntry struct {
 }
 
 func NewOAuthHandler(baseURL string, userRepo *user.Repository) *OAuthHandler {
-	return &OAuthHandler{baseURL: baseURL, userRepo: userRepo}
+	h := &OAuthHandler{baseURL: baseURL, userRepo: userRepo}
+	go func() {
+		for range time.Tick(5 * time.Minute) {
+			h.codes.Range(func(k, v any) bool {
+				if time.Now().After(v.(*codeEntry).expiresAt) {
+					h.codes.Delete(k)
+				}
+				return true
+			})
+		}
+	}()
+	return h
 }
 
 // Metadata handles GET /.well-known/oauth-authorization-server
