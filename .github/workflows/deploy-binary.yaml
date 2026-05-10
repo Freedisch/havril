@@ -1,0 +1,54 @@
+name: Deploy Havril
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.23"
+
+            - name: Get version
+              id: version
+              run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+            - name: Build binary
+              run: cd havril & GOOS=linux GOARCH=amd64 go build -o havril .
+
+            - name: Backup old binary on Droplet
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.DROPLET_IP }}
+                  username: ${{ secrets.DROPLET_USER }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  script: |
+                      if [ -f /platform/havril ]; then
+                        cp /platform/havril /platform/havril-${{ steps.version.outputs.sha }}
+                      fi
+
+            - name: Copy new binary to Droplet
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                  host: ${{ secrets.DROPLET_IP }}
+                  username: ${{ secrets.DROPLET_USER }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  source: havril
+                  target: /platforms
+
+            - name: Restart service
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.DROPLET_IP }}
+                  username: ${{ secrets.DROPLET_USER }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  script: systemctl restart havril
