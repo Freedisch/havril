@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const DEFAULT_SERVER = 'http://localhost:8080';
+const DEFAULT_SERVER = 'https://api.tryhavril.com';
 
 let _activeServerUrl = DEFAULT_SERVER;
 let _activeToken = null;
@@ -150,7 +150,10 @@ $('btn-generate-mcp').addEventListener('click', async () => {
     $('btn-copy-mcp').textContent = 'Copy';
   } catch {
     btn.textContent = 'Error';
-    setTimeout(() => { btn.textContent = 'Generate'; btn.disabled = false; }, 2000);
+    setTimeout(() => {
+      btn.textContent = 'Generate';
+      btn.disabled = false;
+    }, 2000);
     return;
   }
   btn.textContent = 'Regenerate';
@@ -162,7 +165,9 @@ $('btn-copy-mcp').addEventListener('click', () => {
   if (!val) return;
   navigator.clipboard.writeText(val).then(() => {
     $('btn-copy-mcp').textContent = 'Copied!';
-    setTimeout(() => { $('btn-copy-mcp').textContent = 'Copy'; }, 2000);
+    setTimeout(() => {
+      $('btn-copy-mcp').textContent = 'Copy';
+    }, 2000);
   });
 });
 

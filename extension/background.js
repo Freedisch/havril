@@ -8,7 +8,10 @@ async function getConfig() {
   ]);
   return {
     token: session.token || '',
-    serverUrl: (sync.serverUrl || 'http://localhost:8080').replace(/\/$/, ''),
+    serverUrl: (sync.serverUrl || 'https://api.tryhavril.com').replace(
+      /\/$/,
+      '',
+    ),
   };
 }
 
