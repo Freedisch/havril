@@ -24,7 +24,7 @@ jobs:
 
       - name: Build binary
         working-directory: havril
-        run: GOOS=linux GOARCH=amd64 go build -o ../havril .
+        run: GOOS=linux GOARCH=amd64 go build -o ../havril_bin .
 
       - name: Backup old binary on Droplet
         uses: appleboy/ssh-action@v1.0.3
