@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"log"
 	"net/http"
 	"os"
@@ -25,6 +26,8 @@ import (
 	"github.com/markbates/goth/providers/github"
 	"github.com/markbates/goth/providers/google"
 )
+
+var faviconSVG []byte
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -107,6 +110,8 @@ func main() {
 	r.Use(chimid.Recoverer)
 
 	// Public routes
+	r.Get("/favicon.ico", faviconHandler)
+	r.Get("/favicon.svg", faviconHandler)
 	r.Get("/v1/health", healthHandler)
 	r.Get("/v1/auth/{provider}", authHandler.Begin)
 	r.Get("/v1/auth/{provider}/callback", authHandler.Callback)
@@ -153,4 +158,10 @@ func main() {
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"status":"ok"}`))
+}
+
+func faviconHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Write(faviconSVG)
 }
