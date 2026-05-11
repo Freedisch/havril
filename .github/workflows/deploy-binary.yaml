@@ -56,3 +56,12 @@ jobs:
                   mv /platform/havril_bin /platform/havril
                   chmod +x /platform/havril
                   systemctl restart havril
+      - name: Verify service is running
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sleep 5
+            systemctl is-active --quiet havril || (journalctl -u havril -n 20 --no-pager && exit 1)
