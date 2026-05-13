@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -29,8 +30,32 @@ type codeEntry struct {
 	expiresAt     time.Time
 }
 
-func NewOAuthHandler(baseURL string, userRepo *user.Repository) *OAuthHandler {
-	return &OAuthHandler{baseURL: baseURL, userRepo: userRepo}
+func NewOAuthHandler(ctx context.Context, baseURL string, userRepo *user.Repository) *OAuthHandler {
+	h := &OAuthHandler{baseURL: baseURL, userRepo: userRepo}
+	go h.cleanupExpiredCodes(ctx, 5*time.Minute)
+	return h
+}
+
+func (h *OAuthHandler) cleanupExpiredCodes(ctx context.Context, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			h.deleteExpiredCodes(time.Now())
+		}
+	}
+}
+
+func (h *OAuthHandler) deleteExpiredCodes(now time.Time) {
+	h.codes.Range(func(k, v any) bool {
+		if now.After(v.(*codeEntry).expiresAt) {
+			h.codes.Delete(k)
+		}
+		return true
+	})
 }
 
 // Metadata handles GET /.well-known/oauth-authorization-server
