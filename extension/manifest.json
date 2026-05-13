@@ -10,7 +10,7 @@
     "https://claude.ai/*",
     "https://chatgpt.com/*",
     "https://gemini.google.com/*",
-    "http://localhost:8080/*"
+    "https://api.tryhavril.com/*",
   ],
 
   "background": {

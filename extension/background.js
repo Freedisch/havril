@@ -1,14 +1,13 @@
 // Handles all network requests to the havril API so content scripts
 // never need CORS permissions directly.
 
+const API_URL = 'https://api.tryhavril.com';
+
 async function getConfig() {
-  const [session, sync] = await Promise.all([
-    new Promise((r) => chrome.storage.session.get(['token'], r)),
-    new Promise((r) => chrome.storage.sync.get(['serverUrl'], r)),
-  ]);
+  const session = await new Promise((r) => chrome.storage.session.get(['token'], r));
   return {
     token: session.token || '',
-    serverUrl: (sync.serverUrl || 'http://localhost:8080').replace(/\/$/, ''),
+    serverUrl: API_URL,
   };
 }
 
@@ -104,9 +103,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return getConfig();
       }
       case 'START_OAUTH': {
-        const { serverUrl, provider } = message.payload;
+        const { provider } = message.payload;
         const tab = await chrome.tabs.create({
-          url: `${serverUrl}/v1/auth/${provider}?ext=1`,
+          url: `${API_URL}/v1/auth/${provider}?ext=1`,
         });
         await chrome.storage.session.set({ authTabId: tab.id });
         return { started: true };

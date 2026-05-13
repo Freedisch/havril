@@ -1,7 +1,6 @@
 const $ = (id) => document.getElementById(id);
-const DEFAULT_SERVER = 'http://localhost:8080';
+const API_URL = 'https://api.tryhavril.com';
 
-let _activeServerUrl = DEFAULT_SERVER;
 let _activeToken = null;
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
@@ -34,10 +33,6 @@ function setMsg(text, type = '') {
   el.className = type;
 }
 
-function getServerUrl() {
-  return $('serverUrl').value.trim().replace(/\/$/, '') || DEFAULT_SERVER;
-}
-
 function applyUserInfo({ userName, userEmail, userAvatar }) {
   if (userName) $('user-name').textContent = userName;
   if (userEmail) $('user-email').textContent = userEmail;
@@ -46,17 +41,11 @@ function applyUserInfo({ userName, userEmail, userAvatar }) {
 
 Promise.all([
   new Promise((r) => chrome.storage.session.get(['token'], r)),
-  new Promise((r) =>
-    chrome.storage.sync.get(
-      ['serverUrl', 'userName', 'userEmail', 'userAvatar'],
-      r,
-    ),
-  ),
+  new Promise((r) => chrome.storage.sync.get(['userName', 'userEmail', 'userAvatar'], r)),
 ]).then(async ([session, sync]) => {
-  if (sync.serverUrl) $('serverUrl').value = sync.serverUrl;
   if (session.token) {
     applyUserInfo(sync);
-    await loadConnectedState(sync.serverUrl || DEFAULT_SERVER, session.token);
+    await loadConnectedState(session.token);
   } else {
     showView('login');
   }
@@ -67,23 +56,17 @@ Promise.all([
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type !== 'AUTH_SUCCESS') return;
   applyUserInfo(message);
-  Promise.all([
-    new Promise((r) => chrome.storage.session.get(['token'], r)),
-    new Promise((r) => chrome.storage.sync.get(['serverUrl'], r)),
-  ]).then(async ([session, sync]) => {
-    await loadConnectedState(sync.serverUrl || DEFAULT_SERVER, session.token);
+  new Promise((r) => chrome.storage.session.get(['token'], r)).then(async (session) => {
+    await loadConnectedState(session.token);
   });
 });
 
 // ── OAuth buttons ─────────────────────────────────────────────────────────────
 
 async function startOAuth(provider) {
-  const serverUrl = getServerUrl();
-  chrome.storage.sync.set({ serverUrl });
   showView('connecting');
-
   chrome.runtime.sendMessage(
-    { type: 'START_OAUTH', payload: { serverUrl, provider } },
+    { type: 'START_OAUTH', payload: { provider } },
     (res) => {
       if (!res?.ok) {
         showView('login');
@@ -97,20 +80,12 @@ $('btn-google').addEventListener('click', () => startOAuth('google'));
 $('btn-github').addEventListener('click', () => startOAuth('github'));
 $('btn-cancel').addEventListener('click', () => showView('login'));
 
-// ── Advanced toggle ───────────────────────────────────────────────────────────
-
-$('advanced-toggle').addEventListener('click', () => {
-  const open = $('advanced').classList.toggle('open');
-  $('advanced-toggle').textContent = (open ? '▾' : '▸') + ' Server URL';
-});
-
 // ── Connected state ───────────────────────────────────────────────────────────
 
-async function loadConnectedState(serverUrl, token) {
-  _activeServerUrl = serverUrl;
+async function loadConnectedState(token) {
   _activeToken = token;
   try {
-    const res = await fetch(`${serverUrl}/v1/memory`, {
+    const res = await fetch(`${API_URL}/v1/memory`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -139,7 +114,7 @@ $('btn-generate-mcp').addEventListener('click', async () => {
   btn.disabled = true;
   btn.textContent = '…';
   try {
-    const res = await fetch(`${_activeServerUrl}/v1/mcp/token`, {
+    const res = await fetch(`${API_URL}/v1/mcp/token`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${_activeToken}` },
     });
@@ -150,7 +125,10 @@ $('btn-generate-mcp').addEventListener('click', async () => {
     $('btn-copy-mcp').textContent = 'Copy';
   } catch {
     btn.textContent = 'Error';
-    setTimeout(() => { btn.textContent = 'Generate'; btn.disabled = false; }, 2000);
+    setTimeout(() => {
+      btn.textContent = 'Generate';
+      btn.disabled = false;
+    }, 2000);
     return;
   }
   btn.textContent = 'Regenerate';
@@ -162,7 +140,9 @@ $('btn-copy-mcp').addEventListener('click', () => {
   if (!val) return;
   navigator.clipboard.writeText(val).then(() => {
     $('btn-copy-mcp').textContent = 'Copied!';
-    setTimeout(() => { $('btn-copy-mcp').textContent = 'Copy'; }, 2000);
+    setTimeout(() => {
+      $('btn-copy-mcp').textContent = 'Copy';
+    }, 2000);
   });
 });
 

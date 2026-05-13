@@ -31,7 +31,7 @@ export const Integrations: FC = () => {
 
         <div className="relative w-full aspect-video">
           <iframe
-            src="https://www.youtube.com/embed/fwhERqyZKz4"
+            src="https://www.youtube.com/embed/jUjXdk_j97w"
             title="Havril browser extension demo"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
