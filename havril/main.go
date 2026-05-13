@@ -69,11 +69,13 @@ func main() {
 	}
 	goth.UseProviders(providers...)
 
+	ctx := context.Background()
+
 	// Dependency injection
 	userRepo := user.NewRepository(db)
 	userSvc := user.NewService(userRepo)
 	authHandler := handlers.NewAuthHandler(userSvc)
-	oauthHandler := handlers.NewOAuthHandler(baseURL, userRepo)
+	oauthHandler := handlers.NewOAuthHandler(ctx, baseURL, userRepo)
 	authMid := middleware.NewAuthMiddleware(userSvc)
 	modelRepo := user.NewModelRepository(db)
 	modelSvc := user.NewModelService(modelRepo)
@@ -84,7 +86,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("connect qdrant: %v", err)
 	}
-	if err := store.EnsureCollection(context.Background(), qdrantHost, qdrantAPIKey); err != nil {
+	if err := store.EnsureCollection(ctx, qdrantHost, qdrantAPIKey); err != nil {
 		log.Fatalf("failed to ensure qdrant collection: %v", err)
 	}
 	embedder, err := embedding.New(embedding.Config{
