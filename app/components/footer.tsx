@@ -2,7 +2,7 @@ import { FC } from 'react';
 
 const footerLinks = [
   { label: 'GitHub', href: 'https://github.com/freedisch/havril' },
-  { label: 'Docs',   href: '#' },
+  { label: 'Privacy', href: '/privacy' },
   { label: 'Status', href: '#' },
 ];
 
