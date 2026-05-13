@@ -10,7 +10,7 @@
     "https://claude.ai/*",
     "https://chatgpt.com/*",
     "https://gemini.google.com/*",
-    "https://api.tryhavril.com/*",
+    "https://api.tryhavril.com/*"
   ],
 
   "background": {
