@@ -11,7 +11,6 @@
     "https://chatgpt.com/*",
     "https://gemini.google.com/*",
     "https://api.tryhavril.com/*",
-    "https://*/*"
   ],
 
   "background": {
