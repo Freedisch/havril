@@ -7,6 +7,7 @@ var validTypes = map[string]bool{
 	models.MemoryTypeEpisodic:   true,
 	models.MemoryTypeProcedural: true,
 	models.MemoryTypeSummary:    true,
+	models.MemoryTypeProject:    true,
 }
 
 type Classifier struct{}

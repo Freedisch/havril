@@ -17,15 +17,15 @@ import (
 const (
 	openAIChatURL      = "https://api.openai.com/v1/chat/completions"
 	extractorModel     = "gpt-4o-mini"
-	extractorTimeout   = 30 * time.Second
-	extractorMaxTokens = 1000
+	extractorTimeout   = 60 * time.Second
+	extractorMaxTokens = 4096
 )
 
 type candidateMemory struct {
 	Content        string   `json:"content"`
 	Type           string   `json:"type"`
 	ImportanceHint float64  `json:"importance_hint"`
-	Tags           []string `json:"Tags"`
+	Tags           []string `json:"tags"`
 }
 
 type extractionResult struct {
@@ -116,7 +116,6 @@ func (e *Extractor) extract(ctx context.Context, conversation []models.Message) 
 		)
 		return nil, nil
 	}
-
 	return result.Memories, nil
 }
 
@@ -138,36 +137,44 @@ func stripCodeFence(s string) string {
 	return s
 }
 
-const extractionSystemPrompt = `You are a memory extraction engine. Your job is to read a conversation and extract persistent, meaningful facts about the USER ONLY — not about the assistant.
+const extractionSystemPrompt = `You are a memory extraction engine. Read the conversation and extract memories.
+
+
+CATEGORY — WORK CONTEXT (type: project)
+A rich, detailed snapshot of whatever the user is working on, studying, or trying to accomplish. The purpose of this memory is to allow the user to paste it into a different AI platform and immediately continue where they left off — so capture everything that matters: the goal, the current state, what has been tried, what worked, what didn't, open questions, and next steps.
  
-Extract facts that would be genuinely useful to remember in future conversations. Focus on:
-- Who the user is (job, location, background)
-- What they are building or working on
-- Decisions they have made
-- Preferences and working style
-- Skills and technologies they use
+This applies to ANY kind of work, not just software:
+- A coding project → architecture, stack, current bugs, design decisions
+- A research paper → thesis, sources found, arguments developed, gaps remaining
+- A homework assignment → the question, the approach taken, what the user understands so far
+- A learning goal → what the user is learning, what they've covered, what's still unclear
+- A creative project → concept, what exists so far, direction, constraints
+- A business problem → context, options considered, decision made, next action
  
-Do NOT extract:
-- Questions the user asked
-- Temporary or one-off statements
-- Facts about the assistant
-- Generic statements with no personal relevance
+Write project memories as dense paragraphs, not bullet points. They should be long enough that another AI could pick up the work from scratch without needing further explanation from the user.
  
-Respond with a JSON object in this exact format:
+Example of a GOOD project memory (research):
+"User is writing a research paper on the accuracy and compression trade-offs of TurboQuant when applied to tonal African languages, specifically Ewe. The paper argues that standard quantization metrics fail to account for tonal information loss. Current state: literature review complete, methodology section drafted. Main challenge: finding evaluation benchmarks for low-resource tonal languages. Next step: compare WER scores between baseline and quantized models using the WAXAL corpus."
+ 
+Example of a GOOD project memory (homework):
+"User is working on a thermodynamics problem set, question 4: calculating the efficiency of a Carnot engine operating between 300K and 800K. User understands the formula η = 1 - Tc/Th but is confused about why the efficiency ceiling cannot be exceeded. Currently stuck on the entropy explanation. Has read the textbook section but found it unclear."
+ 
+Example of a GOOD project memory (coding):
+"User is building MemoAI, a Go REST API using Chi router, GORM with Postgres, and Qdrant for vector search. Auth uses gothgorm (OAuth via Google/GitHub). Memory storage: Postgres is source of truth, Qdrant is a derived index. Write order on Create: Postgres first, then Qdrant. Embedding service uses OpenAI text-embedding-3-small (1536 dims). Current issue: Qdrant Cloud requires a payload index on user_id before filtered searches work. Next step: wire the MCP server into the router."
+
+ 
+Respond with this exact JSON format:
 {
   "memories": [
     {
-      "content": "A single clear fact about the user, written as a statement",
-      "type": "semantic | episodic | procedural",
-      "importance_hint": 0.0 to 1.0,
+      "content": "...",
+      "type": "project",
+      "importance_hint": 0.0,
       "tags": ["tag1", "tag2"]
     }
   ]
 }
- 
-Memory types:
-- semantic: persistent facts (who they are, what they know, what they use)
-- episodic: things that happened at a point in time (deployed X, decided Y)
-- procedural: how they prefer to do things (prefers X, always does Y)
- 
-If there are no meaningful facts to extract, return: {"memories": []}`
+
+For project memories set importance_hint to 0.9 or higher.
+For personal facts set importance_hint between 0.4 and 0.8 based on how specific and useful the fact is.
+`

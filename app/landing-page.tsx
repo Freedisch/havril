@@ -3,13 +3,12 @@
 import { Nav } from './components/nav';
 import { Hero } from './components/hero';
 import { Ticker } from './components/ticker';
-import { HowItWorks } from './components/howItsWorks';
-import { EngineSection } from './components/engineSection';
 import { Features } from './components/features';
-import { CodePreview } from './components/codePreview';
 import { Integrations } from './components/integrations';
 import { CTA } from './components/cta';
 import { Footer } from './components/footer';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from '@vercel/analytics/next';
 
 export default function Page(): JSX.Element {
   return (
@@ -17,15 +16,13 @@ export default function Page(): JSX.Element {
       <Nav />
       <main>
         <Hero />
-        <Ticker />
-        <HowItWorks />
-        <EngineSection />
-        <Features />
-        <CodePreview />
         <Integrations />
+        <Features />
         <CTA />
       </main>
       <Footer />
+      <SpeedInsights />
+      <Analytics />
     </>
   );
 }

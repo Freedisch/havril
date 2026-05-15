@@ -49,7 +49,7 @@ export const CTA: FC = () => {
         </h2>
 
         <p className="text-[14px] text-mist mb-10 leading-relaxed font-body">
-          Be among the first to connect Havril to your Claude setup.
+          Be among the first to bring persistent memory to every AI you use.
           <br className="hidden md:block" />
           No credit card. No setup fees.
         </p>

@@ -1,6 +1,8 @@
 # Havril
 
-The memory layer for every AI model. **[Learn more »](https://tryavril.ai)** · [Discord](#) · [Website](#) · [Issues](#)
+The memory layer for every AI model. **[Learn more »](https://tryavril.ai)** · [Issues](github/freedisch/havril/issues)
+
+https://github.com/user-attachments/assets/dfc048fb-e853-483a-8aeb-98dc52b8863a
 
 ## About the Project
 
@@ -18,7 +20,7 @@ Havril is a single memory layer that any model can read from and write to. Conne
 
 ## Contribution
 
-Havril is a free and open source project licensed under the [MIT License](LICENSE). You are free to do whatever you want with it.
+Havril is a free and open source project licensed under the [MIT License](havril/LICENSE.md). You are free to do whatever you want with it. Read the [Contributing Guide](havril/CONTRIBUTING.md) before starting.
 
 You could help continue its development by:
 
@@ -27,6 +29,6 @@ You could help continue its development by:
 
 ## Security
 
-If you discover a security vulnerability within Havril, please send an e-mail to [security@Havril.dev](mailto:security@Havril.dev).
+If you discover a security vulnerability within Havril, please send an e-mail to [freedischthibaut@proton.me](mailto:freedischthibaut@proton.me).
 
 All reports will be promptly addressed, and you'll be credited accordingly.

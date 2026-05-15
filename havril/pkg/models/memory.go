@@ -13,6 +13,7 @@ const (
 	MemoryTypeEpisodic   = "episodic"
 	MemoryTypeProcedural = "procedural"
 	MemoryTypeSummary    = "summary"
+	MemoryTypeProject    = "project"
 )
 
 const (
@@ -26,13 +27,13 @@ type Memory struct {
 	ID                     uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	UserID                 uuid.UUID `gorm:"type:uuid;not null;index"`
 	Content                string    `gorm:"not null"`
-	Type                   string    `gorm:"not null;check:type IN ('semantic','episodic','procedural','summary')"`
+	Type                   string    `gorm:"not null;check:type IN ('semantic','episodic','procedural','summary','project')"`
 	Importance             float64   `gorm:"default:0.5"`
 	SourceModel            string
 	SourcePlatform         string
 	Tags                   pq.StringArray `gorm:"type:text[]"`
 	IsActive               bool           `gorm:"default:true;index"`
-	EmbeddingStatus        string         `gorm:"default:'pending';check:embedding_status IN ('pending','complete','failed')"`
+	EmbeddingStatus        string         `gorm:"default:'pending';check:embedding_status IN ('pending','synced','failed')"`
 	EmbeddingRetryCount    int            `gorm:"default:0"`
 	EmbeddingLastAttempted *time.Time
 	AccessCount            int `gorm:"default:0"`

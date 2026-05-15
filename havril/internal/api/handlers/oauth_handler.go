@@ -158,7 +158,7 @@ func (h *OAuthHandler) authorizeForm(w http.ResponseWriter, r *http.Request) {
 </head>
 <body>
   <h2>Authorize Claude</h2>
-  <p>Paste your Havril Bearer token to grant Claude access to your memories.</p>
+  <p>Paste your Havril MCP token to grant Claude access to your memories.</p>
   <form method="POST" action="/oauth/authorize">
     <input type="hidden" name="redirect_uri"           value="%s">
     <input type="hidden" name="state"                  value="%s">
@@ -166,7 +166,7 @@ func (h *OAuthHandler) authorizeForm(w http.ResponseWriter, r *http.Request) {
     <input type="hidden" name="code_challenge_method"  value="%s">
     <input type="hidden" name="client_id"              value="%s">
     <input type="text" name="token" placeholder="havril_xxxxxxxxxxxxxxxxxxxx" autofocus>
-    <p class="hint">Find your token in the Havril dashboard under API Keys.</p>
+    <p class="hint">Generate your MCP token from the Havril browser extension.</p>
     <button type="submit">Authorize</button>
   </form>
 </body>
@@ -256,14 +256,14 @@ func (h *OAuthHandler) Token(w http.ResponseWriter, r *http.Request) {
 func (h *OAuthHandler) tokenError(w http.ResponseWriter, code string, status int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"error": code}) 
+	json.NewEncoder(w).Encode(map[string]string{"error": code})
 }
 
 // tokenValid returns true if rawToken hashes to a known user in the database.
 func (h *OAuthHandler) tokenValid(r *http.Request, rawToken string) bool {
 	sum := sha256.Sum256([]byte(rawToken))
 	tokenHash := hex.EncodeToString(sum[:])
-	_, err := h.userRepo.GetByTokenHash(r.Context(), tokenHash)
+	_, err := h.userRepo.GetByMcpTokenHash(r.Context(), tokenHash)
 	return err == nil
 }
 

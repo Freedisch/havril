@@ -1,6 +1,7 @@
 // content/chatgpt.js — Havril content script for chatgpt.com
 
 const SOURCE_MODEL = 'chatgpt';
+
 function getChatGPTInput() {
   return (
     document.querySelector('#prompt-textarea') ||
@@ -12,18 +13,13 @@ function getChatGPTInput() {
 // Extract conversation turns from the ChatGPT DOM.
 function extractConversation() {
   const messages = [];
-
-  // ChatGPT uses data-message-author-role on each turn's container
-  const turns = document.querySelectorAll('[data-message-author-role]');
-
-  turns.forEach((el) => {
-    const role = el.getAttribute('data-message-author-role'); // "user" | "assistant"
+  document.querySelectorAll('[data-message-author-role]').forEach((el) => {
+    const role = el.getAttribute('data-message-author-role');
     const content = el.innerText?.trim();
     if (content && (role === 'user' || role === 'assistant')) {
       messages.push({ role, content });
     }
   });
-
   return messages;
 }
 
@@ -31,17 +27,15 @@ async function loadMemories() {
   const firstUserTurn = document.querySelector(
     '[data-message-author-role="user"]',
   );
-  if (!firstUserTurn) return;
-
-  const query = firstUserTurn.innerText?.trim();
-  if (!query) return;
+  const query =
+    firstUserTurn?.innerText?.trim() || document.title || 'recent context';
 
   try {
     const result = await sendToBackground('FETCH_MEMORIES', {
       query,
       limit: 5,
     });
-    if (result.memories?.length > 0) {
+    if (result?.memories?.length > 0) {
       showMemoriesPanel(result.memories);
     }
   } catch (err) {
@@ -71,7 +65,9 @@ async function submitConversation() {
 
 function init() {
   injectMemoryPickerButton(getChatGPTInput, submitConversation);
-  loadMemories();
+  //loadMemories();
+
+  // Bridge between fetch-proxy.js (main world) and background service worker
   window.addEventListener('havril-fetch-memories', async (e) => {
     const { query, requestId } = e.detail;
     const result = await sendToBackground('FETCH_MEMORIES', {
@@ -85,10 +81,9 @@ function init() {
       }),
     );
   });
-  // const query = document.title || 'general context';
-  // watchInputAndInject(getChatGPTInput);
 }
 
+// Re-init on SPA navigation
 let lastUrl = location.href;
 new MutationObserver(() => {
   if (location.href !== lastUrl) {

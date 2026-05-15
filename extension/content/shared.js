@@ -187,8 +187,13 @@ function setInputValue(el, value) {
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
   } else {
-    el.innerText = value;
-    el.dispatchEvent(new InputEvent('input', { bubbles: true }));
+    el.focus();
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand('insertText', false, value);
   }
 }
 
@@ -519,7 +524,7 @@ function _buildPickerUI() {
     if (!item) return;
     const memory = currentMemories[parseInt(item.dataset.idx, 10)];
     if (!memory) return;
-    pasteMemoryToInput(memory.content);
+    pasteMemoryToInput(memory);
     closePanel();
   });
   resultsEl.addEventListener('mouseover', (e) => {
@@ -531,17 +536,67 @@ function _buildPickerUI() {
     if (item) item.style.background = 'transparent';
   });
 
-  // ── Paste ─────────────────────────────────────────────────────────────────
-  function pasteMemoryToInput(content) {
+  const MEMORY_TYPE_DESCRIPTIONS = {
+    project: 'an ongoing project the user has been working on',
+    preference: 'a preference or working style the user has expressed',
+    fact: 'a factual detail the user has shared about themselves',
+    episodic: 'something that happened to the user at a point in time',
+    procedural: 'how the user prefers to approach or do something',
+    summary: 'a compressed digest of older context about this user',
+    semantic: 'a persistent fact about the user or their world',
+  };
+
+  function getTypeDescription(type) {
+    return (
+      MEMORY_TYPE_DESCRIPTIONS[type?.toLowerCase()] ??
+      'a piece of remembered context about this user'
+    );
+  }
+
+  function pasteMemoryToInput(memory) {
     const inputEl = _pickerInputEl?.();
     if (!inputEl) {
       showToast('Chat input not found — click the chat box first', 'error');
       return;
     }
+
+    const type = memory.type || 'memory';
+    const raw = (memory.content || '').trim();
+    const body = formatMemoryBody(raw);
+
+    const preamble =
+      `Havril is a context memory layer that persists what users work on and care about across conversations. ` +
+      `The following is ${getTypeDescription(type)}:`;
+
+    const block = `[Havril Memory — ${type}]\n${preamble}\n\n${body}\n\n[/Havril Memory]`;
+
     const existing = getInputValue(inputEl).trim();
-    setInputValue(inputEl, existing ? `${existing}\n\n${content}` : content);
+    setInputValue(inputEl, existing ? `${existing}\n\n${block}` : block);
     inputEl.focus();
     showToast('Memory pasted ✓', 'success');
+  }
+
+  function formatMemoryBody(text, sentencesPerParagraph = 3) {
+    // If natural paragraphs already exist, use them
+    const naturalParagraphs = text
+      .split(/\n{2,}/)
+      .map((p) => p.replace(/\n/g, ' ').trim())
+      .filter(Boolean);
+    if (naturalParagraphs.length > 1) {
+      return naturalParagraphs.join('\n\n');
+    }
+
+    // Otherwise split into sentences and group them
+    const sentences = text
+      .split(/(?<=[.!?])\s+(?=[A-Z])/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const paragraphs = [];
+    for (let i = 0; i < sentences.length; i += sentencesPerParagraph) {
+      paragraphs.push(sentences.slice(i, i + sentencesPerParagraph).join(' '));
+    }
+    return paragraphs.join('\n\n');
   }
 
   document.body.appendChild(panel);

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"log"
 	"net/http"
 	"os"
@@ -25,6 +26,8 @@ import (
 	"github.com/markbates/goth/providers/github"
 	"github.com/markbates/goth/providers/google"
 )
+
+var faviconSVG []byte
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -107,6 +110,8 @@ func main() {
 	r.Use(chimid.Recoverer)
 
 	// Public routes
+	r.Get("/favicon.ico", faviconHandler)
+	r.Get("/favicon.svg", faviconHandler)
 	r.Get("/v1/health", healthHandler)
 	r.Get("/v1/auth/{provider}", authHandler.Begin)
 	r.Get("/v1/auth/{provider}/callback", authHandler.Callback)
@@ -122,9 +127,9 @@ func main() {
 	r.Get("/oauth/authorize", oauthHandler.Authorize)
 	r.Post("/oauth/authorize", oauthHandler.Authorize)
 	r.Post("/oauth/token", oauthHandler.Token)
-
 	r.Group(func(r chi.Router) {
 		r.Use(authMid.Authenticate)
+		r.Post("/v1/mcp/token", authHandler.NewMcpToken)
 		r.Post("/v1/models/connect", modelsHandler.Connect)
 		r.Get("/v1/models", modelsHandler.List)
 
@@ -137,10 +142,12 @@ func main() {
 
 	mcpSrv := mcp.New(memorySvc, userRepo)
 	mcpHandler := mcpSrv.MustAuth(mcpSrv.Handler())
-	r.Method(http.MethodPost, "/mcp", mcpHandler)
-	r.Method(http.MethodGet, "/mcp", mcpHandler)
-	r.Method(http.MethodDelete, "/mcp", mcpHandler)
-
+	r.Group(func(r chi.Router) {
+		r.Use(authMid.AuthenticateMcp)
+		r.Method(http.MethodPost, "/mcp", mcpHandler)
+		r.Method(http.MethodGet, "/mcp", mcpHandler)
+		r.Method(http.MethodDelete, "/mcp", mcpHandler)
+	})
 
 	log.Printf("havril listening on :%s", port)
 	if err := http.ListenAndServe(":"+port, r); err != nil {
@@ -150,6 +157,11 @@ func main() {
 
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok"}`)) 
+	w.Write([]byte(`{"status":"ok"}`))
 }
 
+func faviconHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Write(faviconSVG)
+}

@@ -1,12 +1,14 @@
 const $ = (id) => document.getElementById(id);
-const DEFAULT_SERVER = 'http://localhost:8080';
+const API_URL = 'https://api.tryhavril.com';
+
+let _activeToken = null;
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 
 function applyTheme(dark) {
   document.body.dataset.theme = dark ? 'dark' : 'light';
   $('icon-moon').style.display = dark ? 'none' : '';
-  $('icon-sun').style.display  = dark ? '' : 'none';
+  $('icon-sun').style.display = dark ? '' : 'none';
 }
 
 chrome.storage.sync.get(['havrilTheme'], (r) => {
@@ -31,52 +33,40 @@ function setMsg(text, type = '') {
   el.className = type;
 }
 
-function getServerUrl() {
-  return $('serverUrl').value.trim().replace(/\/$/, '') || DEFAULT_SERVER;
-}
-
 function applyUserInfo({ userName, userEmail, userAvatar }) {
   if (userName) $('user-name').textContent = userName;
   if (userEmail) $('user-email').textContent = userEmail;
   if (userAvatar) $('user-avatar').src = userAvatar;
 }
 
-chrome.storage.sync.get(
-  ['token', 'serverUrl', 'userName', 'userEmail', 'userAvatar', 'havrilTheme'],
-  async (stored) => {
-    if (stored.serverUrl) $('serverUrl').value = stored.serverUrl;
-
-    if (stored.token) {
-      applyUserInfo(stored);
-      await loadConnectedState(
-        stored.serverUrl || DEFAULT_SERVER,
-        stored.token,
-      );
-    } else {
-      showView('login');
-    }
-  },
-);
+Promise.all([
+  new Promise((r) => chrome.storage.session.get(['token'], r)),
+  new Promise((r) => chrome.storage.sync.get(['userName', 'userEmail', 'userAvatar'], r)),
+]).then(async ([session, sync]) => {
+  if (session.token) {
+    applyUserInfo(sync);
+    await loadConnectedState(session.token);
+  } else {
+    showView('login');
+  }
+});
 
 // ── AUTH_SUCCESS from background (popup was open during OAuth) ────────────────
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type !== 'AUTH_SUCCESS') return;
   applyUserInfo(message);
-  chrome.storage.sync.get(['token', 'serverUrl'], async (stored) => {
-    await loadConnectedState(stored.serverUrl || DEFAULT_SERVER, stored.token);
+  new Promise((r) => chrome.storage.session.get(['token'], r)).then(async (session) => {
+    await loadConnectedState(session.token);
   });
 });
 
 // ── OAuth buttons ─────────────────────────────────────────────────────────────
 
 async function startOAuth(provider) {
-  const serverUrl = getServerUrl();
-  chrome.storage.sync.set({ serverUrl });
   showView('connecting');
-
   chrome.runtime.sendMessage(
-    { type: 'START_OAUTH', payload: { serverUrl, provider } },
+    { type: 'START_OAUTH', payload: { provider } },
     (res) => {
       if (!res?.ok) {
         showView('login');
@@ -90,28 +80,18 @@ $('btn-google').addEventListener('click', () => startOAuth('google'));
 $('btn-github').addEventListener('click', () => startOAuth('github'));
 $('btn-cancel').addEventListener('click', () => showView('login'));
 
-// ── Advanced toggle ───────────────────────────────────────────────────────────
-
-$('advanced-toggle').addEventListener('click', () => {
-  const open = $('advanced').classList.toggle('open');
-  $('advanced-toggle').textContent = (open ? '▾' : '▸') + ' Server URL';
-});
-
 // ── Connected state ───────────────────────────────────────────────────────────
 
-async function loadConnectedState(serverUrl, token) {
+async function loadConnectedState(token) {
+  _activeToken = token;
   try {
-    const res = await fetch(`${serverUrl}/v1/memory`, {
+    const res = await fetch(`${API_URL}/v1/memory`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
     if (res.status === 401) {
-      await chrome.storage.sync.remove([
-        'token',
-        'userName',
-        'userEmail',
-        'userAvatar',
-      ]);
+      await chrome.storage.sync.remove(['userName', 'userEmail', 'userAvatar']);
+      await chrome.storage.session.remove(['token']);
       showView('login');
       setMsg('Session expired — please sign in again', 'error');
       return;
@@ -127,6 +107,45 @@ async function loadConnectedState(serverUrl, token) {
   }
 }
 
+// ── MCP Token ─────────────────────────────────────────────────────────────────
+
+$('btn-generate-mcp').addEventListener('click', async () => {
+  const btn = $('btn-generate-mcp');
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const res = await fetch(`${API_URL}/v1/mcp/token`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${_activeToken}` },
+    });
+    if (!res.ok) throw new Error('server error');
+    const data = await res.json();
+    $('mcp-token-value').textContent = data.mcp_token;
+    $('mcp-token-display').style.display = 'block';
+    $('btn-copy-mcp').textContent = 'Copy';
+  } catch {
+    btn.textContent = 'Error';
+    setTimeout(() => {
+      btn.textContent = 'Generate';
+      btn.disabled = false;
+    }, 2000);
+    return;
+  }
+  btn.textContent = 'Regenerate';
+  btn.disabled = false;
+});
+
+$('btn-copy-mcp').addEventListener('click', () => {
+  const val = $('mcp-token-value').textContent;
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(() => {
+    $('btn-copy-mcp').textContent = 'Copied!';
+    setTimeout(() => {
+      $('btn-copy-mcp').textContent = 'Copy';
+    }, 2000);
+  });
+});
+
 // ── Logout ────────────────────────────────────────────────────────────────────
 
 $('btn-logout').addEventListener('click', () => {
@@ -134,6 +153,11 @@ $('btn-logout').addEventListener('click', () => {
     $('user-name').textContent = '—';
     $('user-email').textContent = '—';
     $('user-avatar').src = '';
+    $('mcp-token-display').style.display = 'none';
+    $('mcp-token-value').textContent = '';
+    $('btn-generate-mcp').textContent = 'Generate';
+    $('btn-generate-mcp').disabled = false;
+    _activeToken = null;
     showView('login');
     setMsg('');
   });

@@ -28,14 +28,19 @@ export const metadata: Metadata = {
   title: 'Havril — Memory That Follows You Across Every Model',
   description:
     'One memory layer for all your AI models. Chat on Claude, switch to ChatGPT — your context travels with you.',
-  icons: {
-    icon: '/havril.svg',
-  },
   openGraph: {
     title: 'Havril — One Memory. Every Model.',
     description:
       'Persistent AI memory that works across Claude, ChatGPT, Gemini and more.',
     type: 'website',
+    images: [{ url: '/havril.png', width: 1200, height: 630, alt: 'Havril' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Havril — One Memory. Every Model.',
+    description:
+      'Persistent AI memory that works across Claude, ChatGPT, Gemini and more.',
+    images: ['/havril.png'],
   },
 };
 
@@ -46,6 +51,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${displayFont.variable} ${monoFont.variable} ${bodyFont.variable}`}
+      suppressHydrationWarning
     >
       <body className="bg-ink text-cream font-body antialiased overflow-x-hidden">
         {children}
